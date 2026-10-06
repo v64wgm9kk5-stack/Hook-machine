@@ -1,0 +1,1766 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Hook Machine — 1 photo → 20 vidéos virales</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    :root {
+        --bg: #0a0a0f;
+        --panel: #14141c;
+        --panel-2: #1c1c28;
+        --border: #2a2a3a;
+        --ink: #ffffff;
+        --ink-dim: #8888a0;
+        --ink-faint: #55556a;
+        --success: #10d97c;
+        --error: #ff3860;
+        --warn: #ffb020;
+        --info: #5c7cfa;
+        --neon-pink: #ff2e93;
+        --neon-cyan: #00e5ff;
+        --neon-purple: #a855f7;
+        --neon-lime: #b9ff2e;
+        --radius: 14px;
+    }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        background: var(--bg);
+        background-image:
+            radial-gradient(circle at 20% 0%, rgba(255,46,147,0.15) 0%, transparent 40%),
+            radial-gradient(circle at 80% 100%, rgba(0,229,255,0.12) 0%, transparent 40%);
+        color: var(--ink); min-height: 100vh;
+        padding: 1.5rem 1rem 6rem; font-size: 15px; line-height: 1.5;
+        max-width: 900px; margin: 0 auto;
+    }
+    header { margin-bottom: 1.5rem; text-align: center; }
+    h1 {
+        font-size: 1.6rem; font-weight: 800; letter-spacing: -0.03em;
+        margin-bottom: 0.3rem;
+        background: linear-gradient(90deg, var(--neon-pink), var(--neon-cyan));
+        -webkit-background-clip: text; background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .subtitle { font-size: 0.8rem; color: var(--ink-dim); font-style: italic; }
+
+    .toast {
+        position: fixed; top: 1.5rem; left: 50%;
+        transform: translateX(-50%) translateY(-100px);
+        background: var(--panel-2); color: #fff;
+        border: 1px solid var(--border);
+        padding: 0.85rem 1.4rem; border-radius: 12px;
+        font-size: 0.85rem; font-weight: 600;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        z-index: 1000; opacity: 0;
+        transition: transform 0.35s cubic-bezier(.2,.9,.3,1.2), opacity 0.35s;
+        max-width: 90vw; text-align: center;
+        display: flex; align-items: center; gap: 0.5rem;
+    }
+    .toast.visible { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.success { background: var(--success); color: #000; border-color: var(--success); }
+    .toast.error { background: var(--error); color: #fff; border-color: var(--error); }
+    .toast.warn { background: var(--warn); color: #000; border-color: var(--warn); }
+    .toast .toast-icon { font-size: 1.1rem; }
+
+    .info-banner {
+        background: linear-gradient(135deg, rgba(255,46,147,0.1) 0%, rgba(0,229,255,0.08) 100%);
+        border: 1px solid rgba(255,46,147,0.3);
+        padding: 0.9rem 1rem; border-radius: 12px;
+        font-size: 0.78rem; color: #e0e0f0;
+        margin-bottom: 1rem; line-height: 1.5;
+    }
+    .info-banner strong { color: #fff; }
+
+    .section {
+        background: var(--panel); border: 1px solid var(--border);
+        border-radius: var(--radius); margin-bottom: 1rem;
+        overflow: hidden;
+    }
+    .section-header {
+        padding: 0.9rem 1.1rem; cursor: pointer; user-select: none;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .section-header:active { background: var(--panel-2); }
+    .section-title {
+        font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;
+        color: var(--ink-dim); font-weight: 700;
+    }
+    .section-title .badge {
+        display: inline-block; margin-left: 0.4rem; padding: 0.1rem 0.4rem;
+        background: var(--neon-pink); color: #fff; border-radius: 10px;
+        font-size: 0.65rem; letter-spacing: 0;
+    }
+    .section-title .badge.soft { background: var(--neon-cyan); color: #000; }
+    .section-header .chevron {
+        font-size: 0.7rem; color: var(--ink-faint); transition: transform 0.2s;
+    }
+    .section.open .section-header .chevron { transform: rotate(180deg); }
+    .section-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+    .section.open .section-body { max-height: 4000px; }
+    .section-content { padding: 0 1.1rem 1.1rem; }
+
+    .api-panel {
+        background: var(--panel); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 1rem 1.2rem;
+        margin-bottom: 1rem; transition: border-color 0.3s;
+    }
+    .api-panel.ok { border-color: var(--success); }
+
+    .api-key-input {
+        width: 100%; padding: 0.85rem 1rem;
+        border-radius: 10px; border: 1px solid var(--border);
+        background: var(--panel-2); color: var(--ink);
+        font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+        font-size: 0.85rem; margin-bottom: 0.6rem;
+    }
+    .api-key-input:focus { outline: none; border-color: var(--neon-pink); }
+
+    .api-save-btn {
+        width: 100%; padding: 0.8rem 1.2rem;
+        border-radius: 10px; border: none;
+        background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
+        color: #fff;
+        font-size: 0.9rem; font-weight: 700; font-family: inherit;
+        cursor: pointer; transition: opacity 0.2s, transform 0.1s;
+        margin-bottom: 0.6rem;
+    }
+    .api-save-btn:active { transform: scale(0.98); }
+
+    .api-status-line {
+        font-size: 0.75rem; padding: 0.55rem 0.85rem;
+        border-radius: 8px; margin-bottom: 0.5rem;
+        display: flex; align-items: center; gap: 0.5rem;
+        background: var(--panel-2); color: var(--ink-dim);
+        transition: all 0.3s;
+    }
+    .api-status-line.ok {
+        background: rgba(16,217,124,0.15); color: var(--success); font-weight: 600;
+    }
+    .api-status-line .status-dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: var(--ink-faint); flex-shrink: 0;
+        transition: background 0.3s;
+    }
+    .api-status-line.ok .status-dot { background: var(--success); box-shadow: 0 0 8px var(--success); }
+
+    .api-hint { font-size: 0.72rem; color: var(--ink-dim); margin-top: 0.4rem; }
+    .api-hint a { color: var(--neon-cyan); text-decoration: none; }
+
+    .upload-zone {
+        border: 2px dashed var(--border); border-radius: var(--radius);
+        padding: 2.5rem 1rem; text-align: center; cursor: pointer;
+        transition: all 0.25s; margin-bottom: 1rem;
+        background: var(--panel);
+    }
+    .upload-zone:active { border-color: var(--neon-pink); background: rgba(255,46,147,0.05); }
+    .upload-zone.loading { pointer-events: none; opacity: 0.6; }
+    .upload-zone input[type="file"] { display: none; }
+    .upload-icon { font-size: 2.8rem; margin-bottom: 0.6rem; }
+    .upload-text { font-size: 1rem; color: var(--ink); margin-bottom: 0.3rem; font-weight: 600; }
+    .upload-hint { font-size: 0.75rem; color: var(--ink-dim); }
+
+    .single-image-preview {
+        position: relative; border-radius: 12px; overflow: hidden;
+        border: 2px solid var(--neon-pink);
+        background: #000; aspect-ratio: 9/16; max-width: 260px;
+        margin: 0 auto 1rem;
+        box-shadow: 0 0 40px rgba(255,46,147,0.3);
+    }
+    .single-image-preview img {
+        width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .single-image-preview .remove-btn {
+        position: absolute; top: 8px; right: 8px;
+        background: rgba(255,56,96,0.9); color: #fff; border: none;
+        width: 32px; height: 32px; border-radius: 50%; font-size: 14px;
+        cursor: pointer; display: flex; align-items: center; justify-content: center;
+        font-weight: bold;
+    }
+    .single-image-preview .preview-label {
+        position: absolute; bottom: 0; left: 0; right: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+        color: #fff; padding: 1.5rem 0.8rem 0.6rem;
+        font-size: 0.75rem; font-weight: 600;
+    }
+
+    .count-selector {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+        gap: 0.5rem;
+        margin-bottom: 0.8rem;
+    }
+    .count-option {
+        padding: 0.9rem 0.5rem; border-radius: 10px;
+        border: 1px solid var(--border); background: var(--panel-2);
+        text-align: center; cursor: pointer; transition: all 0.15s;
+        font-weight: 700; font-size: 1rem;
+    }
+    .count-option:active { transform: scale(0.96); }
+    .count-option .count-label {
+        display: block; font-size: 0.6rem; font-weight: 500;
+        color: var(--ink-dim); margin-top: 0.15rem; text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .count-option.selected {
+        background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
+        color: #fff; border-color: transparent;
+        box-shadow: 0 4px 20px rgba(255,46,147,0.4);
+    }
+    .count-option.selected .count-label { color: rgba(255,255,255,0.8); }
+
+    .control-row { margin-bottom: 0.9rem; }
+    .control-row:last-child { margin-bottom: 0; }
+    .control-label {
+        display: block; font-size: 0.72rem; color: var(--ink-dim);
+        margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.06em;
+        font-weight: 700;
+    }
+    select {
+        width: 100%; padding: 0.75rem 0.9rem; border-radius: 10px;
+        border: 1px solid var(--border); background: var(--panel-2);
+        color: var(--ink); font-family: inherit; font-size: 0.88rem;
+        -webkit-appearance: none; appearance: none;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%23ffffff' d='M0 0l5 6 5-6z'/></svg>");
+        background-repeat: no-repeat;
+        background-position: right 0.9rem center;
+        background-size: 10px;
+    }
+    select:focus { outline: none; border-color: var(--neon-pink); }
+
+    .toggle-row {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 0.75rem 0; border-bottom: 1px solid var(--border);
+    }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-info { flex: 1; padding-right: 0.8rem; }
+    .toggle-label { font-size: 0.85rem; color: var(--ink); font-weight: 600; margin-bottom: 0.15rem; }
+    .toggle-desc { font-size: 0.7rem; color: var(--ink-dim); }
+    .toggle-switch {
+        width: 46px; height: 26px; border-radius: 13px;
+        background: var(--panel-2); border: 1px solid var(--border);
+        position: relative; cursor: pointer; flex-shrink: 0;
+        transition: background 0.25s;
+    }
+    .toggle-switch::after {
+        content: ''; position: absolute; top: 2px; left: 2px;
+        width: 20px; height: 20px; border-radius: 50%;
+        background: var(--ink-faint); transition: all 0.25s;
+    }
+    .toggle-switch.on { background: var(--neon-pink); border-color: var(--neon-pink); }
+    .toggle-switch.on::after { left: calc(100% - 22px); background: #fff; }
+
+    .btn-primary {
+        width: 100%; padding: 1.2rem; border-radius: var(--radius);
+        border: none;
+        background: linear-gradient(135deg, var(--neon-pink) 0%, var(--neon-purple) 50%, var(--neon-cyan) 100%);
+        background-size: 200% 200%;
+        color: #fff;
+        font-size: 1.05rem; font-weight: 800; font-family: inherit;
+        cursor: pointer; transition: all 0.3s;
+        margin-bottom: 1rem;
+        box-shadow: 0 8px 30px rgba(255,46,147,0.35);
+        letter-spacing: 0.02em;
+        position: relative; overflow: hidden;
+    }
+    .btn-primary:hover:not(:disabled) {
+        background-position: 100% 0;
+    }
+    .btn-primary:active:not(:disabled) { transform: scale(0.98); }
+    .btn-primary:disabled { opacity: 0.25; cursor: not-allowed; box-shadow: none; }
+
+    .btn-stop {
+        width: 100%; padding: 0.85rem; border-radius: var(--radius);
+        border: 1px solid var(--error); background: transparent;
+        color: var(--error); font-size: 0.85rem; font-weight: 700;
+        font-family: inherit; cursor: pointer; margin-bottom: 1rem;
+        display: none;
+    }
+    .btn-stop.visible { display: block; }
+
+    .queue { margin-top: 1rem; }
+    .queue-summary {
+        background: var(--panel); border: 1px solid var(--border);
+        border-radius: 10px; padding: 0.8rem 1rem; margin-bottom: 0.6rem;
+        font-size: 0.8rem; display: flex; justify-content: space-between;
+        align-items: center; flex-wrap: wrap; gap: 0.4rem;
+    }
+    .queue-summary .progress-text {
+        color: var(--ink); font-weight: 700;
+    }
+    .queue-summary .eta-text { color: var(--neon-cyan); font-size: 0.75rem; }
+
+    .queue-item {
+        display: flex; align-items: center; gap: 0.7rem;
+        padding: 0.65rem 0.8rem; border-radius: 10px;
+        border: 1px solid var(--border); margin-bottom: 0.4rem;
+        background: var(--panel); transition: all 0.3s;
+        font-size: 0.82rem;
+        position: relative; overflow: hidden;
+    }
+    .queue-item.pending { opacity: 0.55; }
+    .queue-item.creating { border-color: var(--warn); background: rgba(255,176,32,0.05); }
+    .queue-item.processing {
+        border-color: var(--neon-pink);
+        background: rgba(255,46,147,0.06);
+        box-shadow: 0 0 20px rgba(255,46,147,0.15);
+    }
+    .queue-item.done { border-color: var(--success); background: rgba(16,217,124,0.05); }
+    .queue-item.failed { border-color: var(--error); background: rgba(255,56,96,0.05); }
+    .queue-item .q-icon {
+        font-size: 1.1rem; width: 1.6rem; text-align: center; flex-shrink: 0;
+    }
+    .queue-item .q-info { flex: 1; min-width: 0; }
+    .queue-item .q-title {
+        font-weight: 700; font-size: 0.8rem;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .queue-item .q-subtitle {
+        font-size: 0.65rem; color: var(--ink-dim);
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        margin-top: 0.1rem;
+    }
+    .queue-item .q-status {
+        font-size: 0.7rem; color: var(--ink-dim);
+        flex-shrink: 0; text-align: right;
+        max-width: 40%;
+    }
+    .queue-item .q-progress-bar {
+        position: absolute; bottom: 0; left: 0;
+        height: 2px; background: var(--neon-pink);
+        transition: width 0.5s ease;
+        box-shadow: 0 0 8px var(--neon-pink);
+    }
+
+    .queue-more {
+        text-align: center; padding: 0.5rem; color: var(--ink-dim);
+        font-size: 0.75rem; font-style: italic;
+    }
+
+    .gallery { margin-top: 1.5rem; }
+    .gallery-header {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 0.8rem; flex-wrap: wrap; gap: 0.5rem;
+    }
+    .gallery-title {
+        font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em;
+        color: var(--ink); font-weight: 800;
+    }
+    .gallery-actions { display: flex; gap: 0.4rem; }
+    .gallery-action {
+        padding: 0.4rem 0.75rem; border-radius: 8px;
+        background: var(--panel-2); border: 1px solid var(--border);
+        color: var(--ink); font-size: 0.7rem; font-weight: 600;
+        font-family: inherit; cursor: pointer;
+    }
+    .gallery-action:active { transform: scale(0.96); }
+    .gallery-action:hover { border-color: var(--neon-pink); }
+
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 0.8rem;
+    }
+    .gallery-item {
+        border-radius: 12px; overflow: hidden;
+        border: 1px solid var(--border); background: #000;
+        animation: popIn 0.5s cubic-bezier(.2,.9,.3,1.3);
+        position: relative;
+    }
+    @keyframes popIn {
+        from { opacity: 0; transform: scale(0.85); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    .gallery-item video {
+        width: 100%; display: block; aspect-ratio: 9/16; object-fit: cover;
+        background: #000;
+    }
+    .gallery-item .g-info {
+        padding: 0.6rem 0.7rem;
+        background: var(--panel);
+        border-top: 1px solid var(--border);
+    }
+    .gallery-item .g-hook {
+        font-size: 0.65rem; font-weight: 800;
+        text-transform: uppercase; letter-spacing: 0.05em;
+        color: var(--neon-cyan);
+        margin-bottom: 0.2rem;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .gallery-item .g-combo {
+        font-size: 0.7rem; color: var(--ink);
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        font-weight: 600;
+    }
+    .gallery-item .g-sub {
+        font-size: 0.6rem; color: var(--ink-dim);
+        margin-top: 0.15rem;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .gallery-item .g-actions {
+        display: flex; gap: 0.3rem; padding: 0 0.7rem 0.6rem;
+        background: var(--panel);
+    }
+    .gallery-item .g-btn {
+        flex: 1; padding: 0.4rem;
+        border-radius: 6px;
+        background: var(--panel-2); border: 1px solid var(--border);
+        color: var(--ink); font-size: 0.65rem; font-weight: 700;
+        font-family: inherit; cursor: pointer; text-decoration: none;
+        text-align: center;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .gallery-item .g-btn:active { transform: scale(0.96); }
+    .gallery-item .g-btn:hover { border-color: var(--neon-pink); color: var(--neon-pink); }
+
+    .status-bar {
+        position: fixed; bottom: 0; left: 0; right: 0;
+        background: rgba(10,10,15,0.95);
+        backdrop-filter: blur(12px);
+        color: #fff; padding: 0.85rem 1rem;
+        font-size: 0.8rem; display: flex; align-items: center; gap: 0.6rem;
+        transform: translateY(100%); transition: transform 0.3s;
+        z-index: 100;
+        border-top: 1px solid var(--border);
+    }
+    .status-bar.visible { transform: translateY(0); }
+    .status-bar .spinner {
+        width: 14px; height: 14px; border: 2px solid rgba(255,46,147,0.2);
+        border-top-color: var(--neon-pink); border-radius: 50%;
+        animation: spin 0.8s linear infinite; flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .hidden { display: none !important; }
+
+    #noSleepCanvas { position: fixed; top: 0; left: 0; width: 1px; height: 1px; opacity: 0.01; pointer-events: none; z-index: -1; }
+    #noSleepVideo { position: fixed; top: 0; left: 0; width: 1px; height: 1px; opacity: 0.01; pointer-events: none; z-index: -1; }
+
+    .vibe-tag {
+        display: inline-block;
+        font-size: 0.6rem;
+        padding: 0.15rem 0.45rem;
+        border-radius: 6px;
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+        color: var(--ink-dim);
+        margin-right: 0.25rem;
+    }
+</style>
+</head>
+<body>
+
+<header>
+    <h1>🎰 Hook Machine</h1>
+    <p class="subtitle">1 photo → 20 vidéos virales aux styles impossibles</p>
+</header>
+
+<div class="info-banner">
+    <strong>Comment ça marche :</strong> Charge <strong>UNE seule photo</strong>, choisis combien de vidéos tu veux (20 recommandé).
+    L'appli va générer des variations <strong>totalement différentes</strong> en piochant aléatoirement parmi
+    <strong>40+ styles visuels</strong>, <strong>15 ambiances</strong>, <strong>25 mouvements</strong> et <strong>12 types de hook TikTok</strong>.
+    Idéal pour tester ce qui accroche ton audience.
+</div>
+
+<div class="api-panel" id="api-panel">
+    <input type="password" class="api-key-input" id="api-key-input"
+           placeholder="Collez votre clé API ici (sk-...)" autocomplete="off" spellcheck="false">
+    <button type="button" class="api-save-btn" id="api-save-btn">Enregistrer la clé</button>
+    <div class="api-status-line" id="api-status-line">
+        <span class="status-dot"></span>
+        <span id="api-status-text">Aucune clé API enregistrée</span>
+    </div>
+    <div class="api-hint">
+        Clé gratuite sur <a href="https://platform.agnes-ai.com" target="_blank">platform.agnes-ai.com</a> → Settings → API Keys
+    </div>
+</div>
+
+<div class="upload-zone" id="upload-zone">
+    <input type="file" id="file-input" accept="image/*">
+    <div class="upload-icon">📸</div>
+    <div class="upload-text">Chargez votre photo</div>
+    <div class="upload-hint">Une seule photo — toutes les vidéos partiront de celle-ci</div>
+</div>
+
+<div id="single-preview-container"></div>
+
+<div class="section open" id="section-count">
+    <div class="section-header" data-toggle="section-count">
+        <span class="section-title">🔢 Nombre de vidéos à générer</span>
+        <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+        <div class="section-content">
+            <div class="count-selector" id="count-selector"></div>
+        </div>
+    </div>
+</div>
+
+<div class="section open" id="section-mix">
+    <div class="section-header" data-toggle="section-mix">
+        <span class="section-title">🎛️ Réglages du mix aléatoire</span>
+        <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+        <div class="section-content">
+            <div class="control-row">
+                <label class="control-label">Durée de chaque vidéo</label>
+                <select id="duration-select">
+                    <option value="121">5 secondes</option>
+                    <option value="153" selected>6,4 secondes (recommandé TikTok)</option>
+                    <option value="241">10 secondes</option>
+                </select>
+            </div>
+            <div class="control-row">
+                <label class="control-label">Intensité globale du mouvement</label>
+                <select id="intensity-select">
+                    <option value="random" selected>🎲 Totalement aléatoire (recommandé)</option>
+                    <option value="subtle">Calme</option>
+                    <option value="moderate">Modérée</option>
+                    <option value="strong">Extrême / chaotique</option>
+                </select>
+            </div>
+            <div class="control-row">
+                <label class="control-label">Famille de styles à privilégier</label>
+                <select id="family-select">
+                    <option value="all" selected>🎲 Toutes les familles (le plus surprenant)</option>
+                    <option value="cyber">Cyber / Néon / Futuriste</option>
+                    <option value="retro">Rétro / Vintage / Analogique</option>
+                    <option value="anime">Anime / Cartoon / Dessin</option>
+                    <option value="cinema">Cinéma / Hollywood / Épique</option>
+                    <option value="horror">Horreur / Mystère / Sombre</option>
+                    <option value="art">Art / Peinture / Surréaliste</option>
+                    <option value="nature">Nature / Organique / Élément</option>
+                </select>
+            </div>
+            <div class="toggle-row">
+                <div class="toggle-info">
+                    <div class="toggle-label">Anti-doublons</div>
+                    <div class="toggle-desc">Garantit que chaque vidéo a une combinaison unique</div>
+                </div>
+                <div class="toggle-switch on" id="toggle-antidup"></div>
+            </div>
+            <div class="toggle-row">
+                <div class="toggle-info">
+                    <div class="toggle-label">Mode CHAOS</div>
+                    <div class="toggle-desc">Ajoute des effets de glitch, distorsion, flash, caméra folle</div>
+                </div>
+                <div class="toggle-switch" id="toggle-chaos"></div>
+            </div>
+            <div class="toggle-row">
+                <div class="toggle-info">
+                    <div class="toggle-label">Hooks TikTok agressifs</div>
+                    <div class="toggle-desc">Zoom brutal, snap freeze, whiplash, reveal choquant</div>
+                </div>
+                <div class="toggle-switch on" id="toggle-hooks"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<button type="button" class="btn-primary" id="generate-btn" disabled>
+    🎰 LANCER LA MACHINE
+</button>
+
+<button type="button" class="btn-stop" id="stop-btn">
+    ⏹ ARRÊTER
+</button>
+
+<div class="queue" id="queue" style="display:none;"></div>
+
+<div class="gallery" id="gallery" style="display:none;">
+    <div class="gallery-header">
+        <div class="gallery-title">🎬 Vos vidéos générées</div>
+        <div class="gallery-actions">
+            <button class="gallery-action" id="download-all-btn">⬇️ Tout télécharger</button>
+        </div>
+    </div>
+    <div class="gallery-grid" id="gallery-grid"></div>
+</div>
+
+<div class="status-bar" id="status-bar">
+    <div class="spinner"></div>
+    <span id="status-text">Préparation…</span>
+</div>
+
+<div class="toast" id="toast">
+    <span class="toast-icon" id="toast-icon">✓</span>
+    <span id="toast-text">Message</span>
+</div>
+
+<canvas id="noSleepCanvas" width="2" height="2"></canvas>
+<video id="noSleepVideo" playsinline muted loop></video>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// CONFIGURATION
+// ══════════════════════════════════════════════════════════════════
+const API_BASE = 'https://apihub.agnes-ai.com/v1';
+const POLL_BASE = 'https://apihub.agnes-ai.com/agnesapi';
+const MODEL_VIDEO = 'agnes-video-v2.0';
+const FRAME_RATE = 24;
+
+let createIntervalMs = 62000;
+const CREATE_INTERVAL_MIN = 62000;
+const CREATE_INTERVAL_MAX = 90000;
+const CREATE_INTERVAL_SAFE = 75000;
+
+const POLL_INTERVAL_SEC = 8;
+const MAX_POLL_ATTEMPTS = 100;
+
+const TIMING_CACHE_KEY = 'hook_machine_timing_v1';
+const API_KEY_STORAGE = 'agnes_api_key';
+const WAKE_LOCK_PREF = 'agnes_wakelock_enabled';
+
+const MAX_VISIBLE_QUEUE = 40;
+const MAX_IMAGE_SIZE = 15 * 1024 * 1024;
+const THUMBNAIL_MAX_WIDTH = 300;
+
+// ══════════════════════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════════════════════
+let toastTimeout = null;
+function showToast(message, type = 'success', duration = 2500) {
+    const toast = document.getElementById('toast');
+    const icon = document.getElementById('toast-icon');
+    const text = document.getElementById('toast-text');
+    if (!toast || !icon || !text) return;
+
+    toast.classList.remove('visible', 'success', 'error', 'warn');
+    void toast.offsetWidth;
+
+    const icons = { success: '✓', error: '✕', warn: '⚠' };
+    icon.textContent = icons[type] || '✓';
+    text.textContent = message;
+    toast.classList.add(type);
+
+    requestAnimationFrame(() => toast.classList.add('visible'));
+
+    if (toastTimeout) clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => toast.classList.remove('visible'), duration);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ANTI-VEILLE
+// ══════════════════════════════════════════════════════════════════
+let wakeLockSentinel = null;
+let wakeLockEnabled = true;
+let canvasStream = null;
+let canvasInterval = null;
+
+function isWakeLockSupported() {
+    return 'wakeLock' in navigator && typeof navigator.wakeLock.request === 'function';
+}
+
+async function requestWakeLockAPI() {
+    if (!isWakeLockSupported()) return false;
+    try {
+        wakeLockSentinel = await navigator.wakeLock.request('screen');
+        wakeLockSentinel.addEventListener('release', () => {
+            wakeLockSentinel = null;
+        });
+        return true;
+    } catch (e) { return false; }
+}
+
+async function releaseWakeLockAPI() {
+    if (wakeLockSentinel) {
+        try { await wakeLockSentinel.release(); } catch (e) {}
+        wakeLockSentinel = null;
+    }
+}
+
+function startCanvasStream() {
+    if (canvasStream) return true;
+    try {
+        const canvas = document.getElementById('noSleepCanvas');
+        const video = document.getElementById('noSleepVideo');
+        if (!canvas || !video) return false;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return false;
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        if (typeof canvas.captureStream !== 'function') return false;
+        canvasStream = canvas.captureStream(1);
+        let toggle = false;
+        canvasInterval = setInterval(() => {
+            toggle = !toggle;
+            ctx.fillStyle = toggle ? '#000' : '#010101';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }, 1000);
+        video.srcObject = canvasStream;
+        video.muted = true;
+        video.playsInline = true;
+        const p = video.play();
+        if (p && p.catch) p.catch(() => {});
+        return true;
+    } catch (e) { return false; }
+}
+
+function stopCanvasStream() {
+    if (canvasInterval) { clearInterval(canvasInterval); canvasInterval = null; }
+    const video = document.getElementById('noSleepVideo');
+    if (video) { try { video.pause(); video.srcObject = null; } catch (e) {} }
+    if (canvasStream) {
+        try { canvasStream.getTracks().forEach(t => t.stop()); } catch (e) {}
+        canvasStream = null;
+    }
+}
+
+async function activateWakeLock() {
+    let success = false;
+    if (isWakeLockSupported()) success = await requestWakeLockAPI();
+    if (!success) success = startCanvasStream();
+    if (!success && !canvasStream) success = startCanvasStream();
+    return success;
+}
+
+async function ensureWakeLockActive() {
+    if (!wakeLockEnabled) return;
+    if (wakeLockSentinel === null && canvasStream === null) {
+        await activateWakeLock();
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CACHE DES TEMPS
+// ══════════════════════════════════════════════════════════════════
+function loadTimingCache() {
+    try { return JSON.parse(localStorage.getItem(TIMING_CACHE_KEY) || '{}'); }
+    catch (e) { return {}; }
+}
+function saveTimingCache(cache) {
+    try { localStorage.setItem(TIMING_CACHE_KEY, JSON.stringify(cache)); } catch (e) {}
+}
+function recordGenerationTime(numFrames, durationMs) {
+    const cache = loadTimingCache();
+    const key = String(numFrames);
+    if (!cache[key]) cache[key] = [];
+    cache[key].push(durationMs);
+    if (cache[key].length > 10) cache[key] = cache[key].slice(-10);
+    saveTimingCache(cache);
+}
+function estimateGenerationTime(numFrames) {
+    const cache = loadTimingCache();
+    const samples = cache[String(numFrames)];
+    if (samples && samples.length > 0) {
+        const sorted = [...samples].sort((a, b) => a - b);
+        const mid = Math.floor(sorted.length / 2);
+        return sorted.length % 2 === 0 ? (sorted[mid-1] + sorted[mid]) / 2 : sorted[mid];
+    }
+    return 30000 + numFrames * 500;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 🎨 STYLES VISUELS — 40+ STYLES RÉPARTIS EN FAMILLES
+// ══════════════════════════════════════════════════════════════════
+const STYLE_FAMILIES = {
+    cyber: {
+        label: 'Cyber / Néon / Futuriste',
+        styles: [
+            { id: 'cyberpunk', name: 'Cyberpunk Néon', emoji: '🌃', prompt: 'cyberpunk aesthetic with intense neon pink and cyan lighting, holographic reflections, Blade Runner style, rain-slicked surfaces, futuristic dystopia' },
+            { id: 'synthwave', name: 'Synthwave 80s', emoji: '🕹️', prompt: 'synthwave 1980s retro-futuristic aesthetic, neon grid, chrome reflections, purple and pink gradient sky, VHS-era futurism' },
+            { id: 'matrix', name: 'Matrix Digital', emoji: '🟢', prompt: 'The Matrix digital rain aesthetic, cascading green code, glitch effects, dark green tint, techno-dystopia' },
+            { id: 'hologram', name: 'Hologramme Futur', emoji: '💠', prompt: 'holographic projection aesthetic, iridescent light, translucent shimmer, futuristic display, glowing wireframes' },
+            { id: 'space', name: 'Cosmique Spatial', emoji: '🌌', prompt: 'cosmic space setting, deep nebulas, distant galaxies, starlight, weightless drift, astrophysical wonder' },
+            { id: 'atomic', name: 'Atome Rétro-Futur', emoji: '⚛️', prompt: 'atomic age retro-futurism, 1950s sci-fi, atompunk, chrome and teal colors, flying saucers, optimistic futurism' }
+        ]
+    },
+    retro: {
+        label: 'Rétro / Vintage / Analogique',
+        styles: [
+            { id: 'vhs', name: 'VHS 80s', emoji: '📼', prompt: 'authentic VHS tape aesthetic, scan lines, tape distortion, chromatic aberration, faded 80s colors, tracking errors, analog warmth' },
+            { id: 'polaroid', name: 'Polaroïd Fané', emoji: '📷', prompt: 'faded vintage Polaroid photo aesthetic, soft warm tones, slight vignette, dust and scratches, nostalgic film grain' },
+            { id: 'sepia', name: 'Sépia Antique', emoji: '🟤', prompt: 'old sepia photograph, antique look, subtle scratches, aged paper texture, historical mood, warm brown tones' },
+            { id: 'super8', name: 'Super 8', emoji: '🎞️', prompt: 'Super 8mm film aesthetic, heavy grain, flicker, warm faded colors, subtle scratches, home movie feel' },
+            { id: 'western', name: 'Western', emoji: '🤠', prompt: 'spaghetti western aesthetic, warm dusty palette, harsh sunlight, dust particles floating, cinematic wide desert vibe' },
+            { id: 'noir', name: 'Film Noir', emoji: '🕵️', prompt: '1940s film noir aesthetic, high contrast black and white, deep shadows, cigarette smoke, dramatic chiaroscuro, detective mood' },
+            { id: 'kodachrome', name: 'Kodachrome', emoji: '🌈', prompt: 'vintage Kodachrome film look, rich saturated colors, slightly warm, 1960s-1970s photographic feel, golden atmosphere' }
+        ]
+    },
+    anime: {
+        label: 'Anime / Cartoon / Dessin',
+        styles: [
+            { id: 'ghibli', name: 'Studio Ghibli', emoji: '🌿', prompt: 'Studio Ghibli anime aesthetic, hand-painted watercolor backgrounds, Hayao Miyazaki style, soft natural lighting, warm earthy palette, gentle atmosphere' },
+            { id: 'shinkai', name: 'Makoto Shinkai', emoji: '☁️', prompt: 'Makoto Shinkai anime aesthetic, vivid skies with dramatic clouds, saturated colors, lens flares, god rays, hyper-detailed backgrounds, emotional atmosphere' },
+            { id: 'shonen', name: 'Shōnen Action', emoji: '⚔️', prompt: 'shōnen anime action style, dynamic motion lines, bold outlines, vibrant energy, dramatic impact frames, chakra-like glow effects' },
+            { id: 'shoujo', name: 'Shōjo Sparkle', emoji: '💖', prompt: 'shōjo anime aesthetic, sparkling effects, pastel colors, flowers floating, romantic atmosphere, delicate line work, dreamy soft focus' },
+            { id: 'comic', name: 'Comic US', emoji: '💥', prompt: 'American comic book aesthetic, bold ink outlines, halftone dots, vibrant saturated colors, dynamic composition, superhero energy' },
+            { id: 'pixar', name: '3D Pixar', emoji: '✨', prompt: 'high-quality Pixar-style 3D animation, subsurface scattering, cinematic lighting, expressive character design, warm rendering' },
+            { id: 'claymation', name: 'Claymation', emoji: '🧱', prompt: 'stop-motion claymation aesthetic, plasticine texture, fingerprint details, handmade feel, Aardman Studios vibe' },
+            { id: 'pixel', name: 'Pixel Art', emoji: '🎮', prompt: 'retro pixel art aesthetic, 16-bit SNES style, limited color palette, chunky pixels, nostalgic video game feel' }
+        ]
+    },
+    cinema: {
+        label: 'Cinéma / Hollywood / Épique',
+        styles: [
+            { id: 'epic', name: 'Blockbuster Épique', emoji: '🎬', prompt: 'epic Hollywood blockbuster aesthetic, dramatic lighting, cinematic depth of field, heroic composition, sweeping camera, cinematic color grading' },
+            { id: 'scifi', name: 'Sci-Fi Premium', emoji: '🚀', prompt: 'high-end science fiction cinema aesthetic, sleek futuristic design, cool blue palette, lens flares, Christopher Nolan vibes' },
+            { id: 'thriller', name: 'Thriller Suspense', emoji: '🔪', prompt: 'dark thriller aesthetic, cold desaturated palette, tense atmosphere, sharp shadows, suspenseful mood, David Fincher style' },
+            { id: 'western-cinema', name: 'Western Cinéma', emoji: '🌵', prompt: 'cinematic western aesthetic, wide open landscapes, warm dusty tones, harsh sun, epic scale, Sergio Leone composition' },
+            { id: 'fantasy', name: 'Fantasy Épique', emoji: '🗡️', prompt: 'epic fantasy aesthetic, magical atmosphere, dragons flying in the distance, glowing particles, Lord of the Rings vibe, sweeping vista' },
+            { id: 'war', name: 'Film de Guerre', emoji: '💣', prompt: 'war film aesthetic, desaturated palette, smoke and embers, dramatic contrast, heroic atmosphere, Saving Private Ryan style' }
+        ]
+    },
+    horror: {
+        label: 'Horreur / Mystère / Sombre',
+        styles: [
+            { id: 'horror', name: 'Horreur Classique', emoji: '👻', prompt: 'classic horror aesthetic, deep shadows, eerie fog, cold desaturated palette, unsettling mood, thing in the dark' },
+            { id: 'lovecraft', name: 'Lovecraftien', emoji: '🐙', prompt: 'Lovecraftian cosmic horror, tentacles of shadow, impossible geometry, deep sea gloom, green sickly light, dread inducing' },
+            { id: 'zombie', name: 'Zombie Apocalypse', emoji: '🧟', prompt: 'zombie apocalypse aesthetic, decayed atmosphere, smoke and ash, survival horror, bleak desaturated palette, danger imminent' },
+            { id: 'gothic', name: 'Gothique Sombre', emoji: '🦇', prompt: 'gothic dark aesthetic, crimson and black palette, candlelight, cathedral shadows, vampiric atmosphere, dramatic mood' },
+            { id: 'mystery', name: 'Mystère Brumeux', emoji: '🌫️', prompt: 'mysterious foggy atmosphere, muted teal and grey palette, hidden threats, unsettling calm, Twin Peaks vibe' },
+            { id: 'nightmare', name: 'Cauchemar Surréaliste', emoji: '🌀', prompt: 'nightmarish surreal aesthetic, distorted reality, melting forms, disturbing dream logic, Dali meets horror' }
+        ]
+    },
+    art: {
+        label: 'Art / Peinture / Surréaliste',
+        styles: [
+            { id: 'oil', name: 'Peinture à l\'Huile', emoji: '🖼️', prompt: 'classical oil painting aesthetic, visible impasto brushstrokes, rich textured paint, Rembrandt lighting, old master technique' },
+            { id: 'watercolor', name: 'Aquarelle', emoji: '🎨', prompt: 'dreamy watercolor painting aesthetic, soft bleeding edges, translucent washes, paper texture, delicate color blending' },
+            { id: 'baroque', name: 'Baroque', emoji: '👑', prompt: 'Baroque painting aesthetic, dramatic chiaroscuro lighting, rich gold and deep red palette, ornate composition, Caravaggio style' },
+            { id: 'surreal', name: 'Surréaliste', emoji: '🌀', prompt: 'surrealist aesthetic, impossible juxtapositions, dreamlike distortions, melting clocks, Magritte and Dali influence' },
+            { id: 'renaissance', name: 'Renaissance', emoji: '🏛️', prompt: 'Renaissance painting aesthetic, sfumato technique, warm earthly palette, classical composition, Leonardo and Raphael style' },
+            { id: 'pop-art', name: 'Pop Art', emoji: '💥', prompt: 'pop art aesthetic, bold flat colors, halftone Ben-Day dots, Andy Warhol and Roy Lichtenstein style, comic panels' },
+            { id: 'graffiti', name: 'Street Art', emoji: '🎨', prompt: 'street art graffiti aesthetic, spray paint texture, bold tags, urban walls, Banksy-inspired, chaotic energy' }
+        ]
+    },
+    nature: {
+        label: 'Nature / Organique / Élément',
+        styles: [
+            { id: 'fire', name: 'Feu & Braises', emoji: '🔥', prompt: 'surrounded by dancing flames, glowing embers floating in the air, warm orange light, heat haze distortion, elemental fire magic' },
+            { id: 'water', name: 'Eau & Vagues', emoji: '🌊', prompt: 'surrounded by flowing water, glowing blue ripples, underwater light rays, aquatic atmosphere, elemental water magic' },
+            { id: 'storm', name: 'Orage & Éclairs', emoji: '⛈️', prompt: 'dramatic thunderstorm, lightning bolts in the sky, dark rolling clouds, rain and wind, elemental storm magic' },
+            { id: 'ice', name: 'Glace & Neige', emoji: '❄️', prompt: 'surrounded by ice and snow, crystalline frost patterns, cold blue light, falling snowflakes, elemental ice magic' },
+            { id: 'forest', name: 'Forêt Enchantée', emoji: '🌲', prompt: 'enchanted forest, glowing mushrooms, fireflies floating, ancient trees, magical woodland atmosphere, bioluminescence' },
+            { id: 'sakura', name: 'Cerisiers en Fleurs', emoji: '🌸', prompt: 'surrounded by falling cherry blossom petals, soft pink light, spring breeze, delicate romantic atmosphere, Japanese garden' },
+            { id: 'jungle', name: 'Jungle Tropicale', emoji: '🌴', prompt: 'lush tropical jungle, vibrant green foliage, humid air, dappled sunlight, exotic birds and sounds' },
+            { id: 'desert', name: 'Désert Aride', emoji: '🏜️', prompt: 'vast desert, sand dunes rippling, harsh golden sun, heat shimmer, dust devils, epic emptiness' },
+            { id: 'underwater', name: 'Sous-Marin', emoji: '🐠', prompt: 'underwater scene, floating in ocean depths, light rays from above, bubbles rising, fish swimming around, deep blue tranquility' }
+        ]
+    }
+};
+
+// ══════════════════════════════════════════════════════════════════
+// 🌈 AMBIANCES — COUCHES SUPPLÉMENTAIRES
+// ══════════════════════════════════════════════════════════════════
+const AMBIANCES = [
+    { id: 'golden', name: 'Golden Hour', emoji: '🌅', prompt: 'golden hour warm backlight, long amber shadows, sun kiss glow' },
+    { id: 'blue-hour', name: 'Bleu Crépuscule', emoji: '🌆', prompt: 'blue hour atmosphere, deep blue and pink gradient sky, calm dusk' },
+    { id: 'moonlight', name: 'Clair de Lune', emoji: '🌙', prompt: 'cool moonlight, blue and silver tones, soft lunar glow' },
+    { id: 'dramatic', name: 'Dramatique', emoji: '⛅', prompt: 'dramatic high-contrast lighting, deep shadows, theatrical mood' },
+    { id: 'dreamy', name: 'Onirique', emoji: '💭', prompt: 'dreamy hazy atmosphere, soft focus, pastel colors, ethereal glow' },
+    { id: 'misty', name: 'Brumeux', emoji: '🌫️', prompt: 'atmospheric mist, soft haze, diffused light, mysterious fog' },
+    { id: 'neon-night', name: 'Nuit Néon', emoji: '🌃', prompt: 'neon night atmosphere, vibrant colored light reflections, electric mood' },
+    { id: 'rainy', name: 'Pluvieux', emoji: '🌧️', prompt: 'rainy atmosphere, wet reflective surfaces, soft droplet trails, melancholic' },
+    { id: 'stormy', name: 'Orageux', emoji: '⛈️', prompt: 'stormy atmosphere, rolling dark clouds, dramatic sky, tension' },
+    { id: 'snowy', name: 'Neigeux', emoji: '❄️', prompt: 'snowy atmosphere, falling snowflakes, cold bluish light, quiet winter' },
+    { id: 'spring', name: 'Printanier', emoji: '🌸', prompt: 'spring atmosphere, fresh colors, flower petals floating, warm gentle light' },
+    { id: 'summer', name: 'Estival', emoji: '☀️', prompt: 'bright summer atmosphere, strong sunlight, heat shimmer, saturated colors' },
+    { id: 'autumn', name: 'Automnal', emoji: '🍂', prompt: 'autumn atmosphere, falling leaves, warm orange and red palette, nostalgic' },
+    { id: 'winter', name: 'Hivernal', emoji: '🌨️', prompt: 'winter atmosphere, frozen landscape, cold blue palette, sharp crisp air' },
+    { id: 'sunset-explosive', name: 'Coucher Épique', emoji: '🌇', prompt: 'epic sunset with explosive orange, pink and purple sky, dramatic clouds' }
+];
+
+// ══════════════════════════════════════════════════════════════════
+// 🎥 MOUVEMENTS DE CAMÉRA — 25 VARIATIONS
+// ══════════════════════════════════════════════════════════════════
+const CAMERA_MOVES = [
+    { id: 'dolly-in', name: 'Zoom Avant Lent', prompt: 'slow smooth dolly-in, camera gliding toward the subject' },
+    { id: 'dolly-out', name: 'Zoom Arrière', prompt: 'slow dolly-out, camera pulling back to reveal the scene' },
+    { id: 'zoom-punch', name: 'Zoom Punch Brutal', prompt: 'aggressive fast zoom punch-in, sudden jarring impact movement' },
+    { id: 'pan-left', name: 'Panoramique Gauche', prompt: 'smooth horizontal pan from right to left, revealing' },
+    { id: 'pan-right', name: 'Panoramique Droite', prompt: 'smooth horizontal pan from left to right, revealing' },
+    { id: 'tilt-up', name: 'Tilt Vertical Haut', prompt: 'camera tilts upward, revealing the sky above' },
+    { id: 'tilt-down', name: 'Tilt Vertical Bas', prompt: 'camera tilts downward, revealing the ground below' },
+    { id: 'orbit', name: 'Orbite 360', prompt: 'camera orbiting around the subject, revealing all angles' },
+    { id: 'handheld', name: 'Caméra Portée', prompt: 'handheld shaky camera, breathing movement, documentary feel' },
+    { id: 'whip-pan', name: 'Whip Pan', prompt: 'fast whip pan, quick motion blur transition' },
+    { id: 'dutch', name: 'Angle Hollandais', prompt: 'dutch angle tilt, disorienting asymmetric framing' },
+    { id: 'crane-up', name: 'Grue Ascendante', prompt: 'crane shot rising upward, sweeping high angle reveal' },
+    { id: 'crane-down', name: 'Grue Descendante', prompt: 'crane shot descending, settling gently on the subject' },
+    { id: 'push-in-slow', name: 'Poussée Intime', prompt: 'slow intimate push-in toward the subject\'s face' },
+    { id: 'parallax', name: 'Parallaxe Profonde', prompt: 'subtle parallax shift, background and foreground separating, 2.5D depth' },
+    { id: 'rack-focus', name: 'Rack Focus', prompt: 'rack focus from foreground to background or vice versa, cinematic blur shift' },
+    { id: 'freeze', name: 'Freeze Frame', prompt: 'the motion slows to an almost-freeze, micro-movement only, breathing stillness' },
+    { id: 'speed-ramp', name: 'Speed Ramp', prompt: 'speed ramp effect, slowing then accelerating the motion dramatically' },
+    { id: 'shake', name: 'Secousse Violente', prompt: 'violent camera shake, earthquake-like trembling, disorienting' },
+    { id: 'vertigo', name: 'Vertigo Hitchcock', prompt: 'vertigo dolly-zoom effect, background stretches unnaturally while subject stays fixed' },
+    { id: 'spin', name: 'Rotation Complète', prompt: 'full 360-degree camera spin around the subject' },
+    { id: 'drop', name: 'Chute Verticale', prompt: 'camera rapidly drops vertically, feeling of falling' },
+    { id: 'rise', name: 'Ascension Verticale', prompt: 'camera rapidly rises, feeling of elevation and reveal' },
+    { id: 'glitch-cut', name: 'Glitch Cut', prompt: 'rapid glitchy cuts, digital distortion transition frames' },
+    { id: 'whip-zoom', name: 'Whip Zoom Frénétique', prompt: 'frantic whip zoom in and out, chaotic energy' }
+];
+
+// ══════════════════════════════════════════════════════════════════
+// 🎬 HOOKS TIKTOK — 12 PATTERNS D'ACCROCHE
+// ══════════════════════════════════════════════════════════════════
+const TIKTOK_HOOKS = [
+    { id: 'wait-end', name: 'Attends la fin', prompt: 'the first 2 seconds are calm and subtle, then at the 3-second mark something surprising happens — a sudden reveal, transformation, or shocking moment. Classic "wait for it" TikTok structure.' },
+    { id: 'hard-transition', name: 'Transition Brutale', prompt: 'sudden hard cut or whiplash transition mid-way through, jarring the viewer with a completely different visual state in the second half' },
+    { id: 'reveal-zoom', name: 'Zoom Reveal', prompt: 'the scene starts wide or obscured, then rapidly zooms in to reveal the subject in dramatic fashion, building tension' },
+    { id: 'flash-bang', name: 'Flash Bang', prompt: 'a bright flash or explosion of light suddenly transforms the scene, creating a shocking visual impact' },
+    { id: 'glitch-shock', name: 'Glitch Choquant', prompt: 'reality glitches and distorts violently, rippling through the frame before resolving into a new surprising state' },
+    { id: 'freeze-snap', name: 'Snap Freeze', prompt: 'motion suddenly stops mid-action with a jarring freeze frame, then resumes with a new dramatic beat' },
+    { id: 'split-reveal', name: 'Split Reveal', prompt: 'the frame splits into multiple pieces that slowly rotate and reveal the full scene, like broken glass reforming' },
+    { id: 'explosion-entry', name: 'Entrée Explosive', prompt: 'an explosive burst of particles, light, or smoke erupts from the center of the frame, clearing to reveal the subject' },
+    { id: 'portal', name: 'Portail Dimensionnel', prompt: 'a glowing portal opens in the middle of the scene, distorting reality around it, before the subject steps forward dramatically' },
+    { id: 'time-rewind', name: 'Time Rewind', prompt: 'time suddenly rewinds — motion reverses, colors invert briefly, then plays forward again in a new state' },
+    { id: 'double-exposure', name: 'Double Exposition', prompt: 'two different versions of the scene overlap and morph into each other, creating a hypnotic transformation effect' },
+    { id: 'shadow-surprise', name: 'Ombre Surprise', prompt: 'a dark ominous shadow moves across the frame, plunging the scene into darkness before revealing a surprising new state' }
+];
+
+// ══════════════════════════════════════════════════════════════════
+// 💥 CHAOS EFFECTS — AJOUTÉS AU MODE CHAOS
+// ══════════════════════════════════════════════════════════════════
+const CHAOS_EFFECTS = [
+    'heavy digital glitch distortion, RGB channel separation, scan line tearing',
+    'kaleidoscope mirroring effect, repeating fractal patterns',
+    'datamoshing artifacts, pixel sorting, compression corruption',
+    'liquid melt distortion, forms dripping and warping',
+    'chromatic aberration burst, color fringing on all edges',
+    'strobe light flashing, rapid light and dark pulses',
+    'reality fracture, screen splitting into shards',
+    'fractal zoom recursive pattern, infinite tunnel depth',
+    'particle explosion, thousands of glowing particles',
+    'negative inversion flash, colors flipping momentarily',
+    'VHS tracking error sweep, analog corruption wave',
+    'duplicate ghosting trails, motion echo afterimages'
+];
+
+// ══════════════════════════════════════════════════════════════════
+// INTENSITÉS
+// ══════════════════════════════════════════════════════════════════
+const INTENSITY_PRESETS = {
+    subtle: 'very subtle minimal movement, barely perceptible change, calm contemplative mood',
+    moderate: 'moderate clear movement, natural cinematic pace',
+    strong: 'extreme dynamic movement, chaotic energetic motion, powerful physical action, dramatic impact'
+};
+
+// ══════════════════════════════════════════════════════════════════
+// ÉTAT GLOBAL
+// ══════════════════════════════════════════════════════════════════
+const state = {
+    image: null,           // UNE SEULE PHOTO
+    isRunning: false,
+    stopRequested: false,
+    queue: [],
+    completed: 0,
+    failed: 0,
+    videoCount: 20,
+    durationFrames: 153,
+    intensity: 'random',
+    family: 'all',
+    antiDup: true,
+    chaosMode: false,
+    hookMode: true,
+    isLoadingImage: false,
+    creationAttemptsSinceLastError: 0
+};
+
+// ══════════════════════════════════════════════════════════════════
+// CLÉ API
+// ══════════════════════════════════════════════════════════════════
+function getApiKey() {
+    try { return (localStorage.getItem(API_KEY_STORAGE) || '').trim(); }
+    catch (e) { return ''; }
+}
+
+function saveApiKey() {
+    const input = document.getElementById('api-key-input');
+    if (!input) return;
+    const key = input.value.trim();
+    if (!key) {
+        try { localStorage.removeItem(API_KEY_STORAGE); } catch (e) {}
+        updateApiPanel();
+        showToast('Clé supprimée', 'warn');
+        return;
+    }
+    if (!key.startsWith('sk-')) {
+        if (!confirm('La clé ne commence pas par "sk-". La sauvegarder quand même ?')) return;
+    }
+    try {
+        localStorage.setItem(API_KEY_STORAGE, key);
+        updateApiPanel();
+        showToast('Clé API enregistrée ✓', 'success');
+        input.blur();
+    } catch (e) {
+        showToast('Erreur lors de la sauvegarde', 'error');
+    }
+}
+
+function updateApiPanel() {
+    const panel = document.getElementById('api-panel');
+    const input = document.getElementById('api-key-input');
+    const statusLine = document.getElementById('api-status-line');
+    const statusText = document.getElementById('api-status-text');
+    const key = getApiKey();
+    if (!panel || !input || !statusLine || !statusText) return;
+    if (key) {
+        panel.classList.add('ok');
+        statusLine.classList.add('ok');
+        statusText.textContent = 'Clé API active · ' + key.slice(0, 8) + '…' + key.slice(-4);
+        input.value = key;
+        input.placeholder = '';
+    } else {
+        panel.classList.remove('ok');
+        statusLine.classList.remove('ok');
+        statusText.textContent = 'Aucune clé API enregistrée';
+        input.value = '';
+        input.placeholder = 'Collez votre clé API ici (sk-...)';
+    }
+    updateGenerateBtn();
+}
+
+function updateGenerateBtn() {
+    const btn = document.getElementById('generate-btn');
+    if (!btn) return;
+    const hasImage = !!state.image;
+    const hasKey = !!getApiKey();
+    btn.disabled = !hasImage || !hasKey || state.isRunning || state.isLoadingImage;
+
+    if (state.isLoadingImage) {
+        btn.textContent = '⏳ Chargement de la photo…';
+    } else if (state.isRunning) {
+        const done = state.completed + state.failed;
+        btn.textContent = '🎰 GÉNÉRATION… (' + done + '/' + state.queue.length + ')';
+    } else if (!hasKey) {
+        btn.textContent = '🔑 Ajoutez votre clé API';
+    } else if (!hasImage) {
+        btn.textContent = '📸 Chargez une photo';
+    } else {
+        btn.textContent = '🎰 LANCER LA MACHINE — ' + state.videoCount + ' vidéos';
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// UTILITAIRES
+// ══════════════════════════════════════════════════════════════════
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function log(msg) { console.log('[HookMachine] ' + msg); }
+function setStatus(text) {
+    const bar = document.getElementById('status-bar');
+    const txt = document.getElementById('status-text');
+    if (!bar || !txt) return;
+    if (text) { bar.classList.add('visible'); txt.textContent = text; }
+    else bar.classList.remove('visible');
+}
+function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
+}
+function formatEta(seconds) {
+    if (seconds < 60) return Math.round(seconds) + 's';
+    const m = Math.floor(seconds / 60);
+    const s = Math.round(seconds % 60);
+    return m + 'm' + (s > 0 ? ' ' + s + 's' : '');
+}
+function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// ══════════════════════════════════════════════════════════════════
+// TRAITEMENT DE LA PHOTO
+// ══════════════════════════════════════════════════════════════════
+function fileToDataUri(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.onerror = () => reject(new Error('Erreur lecture'));
+        reader.readAsDataURL(file);
+    });
+}
+
+function generateThumbnail(dataUri) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            try {
+                const canvas = document.createElement('canvas');
+                const ratio = img.height / img.width;
+                canvas.width = THUMBNAIL_MAX_WIDTH;
+                canvas.height = Math.round(THUMBNAIL_MAX_WIDTH * ratio);
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                resolve(canvas.toDataURL('image/jpeg', 0.85));
+            } catch (e) { resolve(dataUri); }
+        };
+        img.onerror = () => resolve(dataUri);
+        img.src = dataUri;
+    });
+}
+
+async function handleSingleFile(file) {
+    if (!file.type.startsWith('image/')) {
+        showToast('Ce fichier n\'est pas une image', 'error');
+        return;
+    }
+    if (file.size > MAX_IMAGE_SIZE) {
+        showToast('Image trop lourde (max 15 MB)', 'error');
+        return;
+    }
+
+    state.isLoadingImage = true;
+    updateGenerateBtn();
+    setStatus('Chargement de la photo…');
+
+    try {
+        const dataUri = await fileToDataUri(file);
+        const thumbnail = await generateThumbnail(dataUri);
+        state.image = {
+            file: file,
+            dataUri: dataUri,
+            thumbnail: thumbnail,
+            id: Date.now() + Math.random()
+        };
+        renderSinglePreview();
+        showToast('Photo chargée ✓', 'success');
+    } catch (e) {
+        showToast('Erreur de chargement', 'error');
+    }
+
+    state.isLoadingImage = false;
+    setStatus(null);
+    updateGenerateBtn();
+}
+
+function removeImage() {
+    state.image = null;
+    renderSinglePreview();
+    updateGenerateBtn();
+}
+
+function renderSinglePreview() {
+    const container = document.getElementById('single-preview-container');
+    const uploadZone = document.getElementById('upload-zone');
+    if (!state.image) {
+        container.innerHTML = '';
+        uploadZone.style.display = 'block';
+        return;
+    }
+    uploadZone.style.display = 'none';
+    container.innerHTML =
+        '<div class="single-image-preview">' +
+            '<img src="' + state.image.thumbnail + '" alt="">' +
+            '<button class="remove-btn" id="remove-image-btn">✕</button>' +
+            '<div class="preview-label">📸 Photo source chargée</div>' +
+        '</div>';
+    document.getElementById('remove-image-btn').addEventListener('click', removeImage);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// RENDU — SÉLECTEUR DE NOMBRE DE VIDÉOS
+// ══════════════════════════════════════════════════════════════════
+const COUNT_OPTIONS = [
+    { value: 5, label: 'Rapide' },
+    { value: 10, label: 'Découverte' },
+    { value: 20, label: 'Recommandé' },
+    { value: 30, label: 'Batch' },
+    { value: 50, label: 'Massif' },
+    { value: 100, label: 'Extrême' }
+];
+
+function renderCountSelector() {
+    const container = document.getElementById('count-selector');
+    container.innerHTML = COUNT_OPTIONS.map(o => {
+        return '<div class="count-option ' + (state.videoCount === o.value ? 'selected' : '') + '" data-count="' + o.value + '">' +
+            o.value + '<span class="count-label">' + esc(o.label) + '</span>' +
+        '</div>';
+    }).join('');
+
+    container.querySelectorAll('[data-count]').forEach(el => {
+        el.addEventListener('click', () => {
+            state.videoCount = parseInt(el.dataset.count, 10);
+            renderCountSelector();
+            updateGenerateBtn();
+        });
+    });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// COMBINAISON ALÉATOIRE UNIQUE
+// ══════════════════════════════════════════════════════════════════
+function getAllStylesFromFamily(family) {
+    if (family === 'all') {
+        return Object.values(STYLE_FAMILIES).flatMap(f => f.styles);
+    }
+    return STYLE_FAMILIES[family] ? STYLE_FAMILIES[family].styles : [];
+}
+
+// Génère toutes les combinaisons possibles de manière unique
+function generateUniqueCombos(count) {
+    const styles = getAllStylesFromFamily(state.family);
+    const combos = [];
+
+    // Génère un pool de combinaisons uniques
+    const seen = new Set();
+    const maxAttempts = count * 50;
+    let attempts = 0;
+
+    while (combos.length < count && attempts < maxAttempts) {
+        attempts++;
+        const style = pickRandom(styles);
+        const ambiance = pickRandom(AMBIANCES);
+        const camera = pickRandom(CAMERA_MOVES);
+        const hook = state.hookMode ? pickRandom(TIKTOK_HOOKS) : null;
+
+        const key = style.id + '|' + ambiance.id + '|' + camera.id + (hook ? '|' + hook.id : '');
+
+        if (state.antiDup && seen.has(key)) continue;
+        seen.add(key);
+
+        const combo = {
+            style: style,
+            ambiance: ambiance,
+            camera: camera,
+            hook: hook,
+            chaos: state.chaosMode ? pickRandom(CHAOS_EFFECTS) : null
+        };
+        combos.push(combo);
+    }
+
+    // Si anti-dup impossible (trop de vidéos demandées), on relâche la contrainte
+    while (combos.length < count) {
+        const style = pickRandom(styles);
+        const ambiance = pickRandom(AMBIANCES);
+        const camera = pickRandom(CAMERA_MOVES);
+        const hook = state.hookMode ? pickRandom(TIKTOK_HOOKS) : null;
+        combos.push({
+            style, ambiance, camera, hook,
+            chaos: state.chaosMode ? pickRandom(CHAOS_EFFECTS) : null
+        });
+    }
+
+    return combos;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CONSTRUCTION DU PROMPT À PARTIR D'UNE COMBINAISON
+// ══════════════════════════════════════════════════════════════════
+function buildPromptFromCombo(combo) {
+    const parts = [];
+
+    // Base : prolongation de l'image
+    parts.push(
+        'Animate this exact image as the starting frame. ' +
+        'This is a CONTINUATION of the source image, not a re-imagination. ' +
+        'Preserve the exact subject identity, face, expression, and clothing from the original photo. ' +
+        'Apply the following visual transformation to the entire scene:'
+    );
+
+    // Style
+    parts.push(combo.style.prompt);
+
+    // Ambiance
+    parts.push('Ambiance: ' + combo.ambiance.prompt);
+
+    // Mouvement de caméra
+    parts.push('Camera: ' + combo.camera.prompt);
+
+    // Intensité
+    if (state.intensity !== 'random' && INTENSITY_PRESETS[state.intensity]) {
+        parts.push(INTENSITY_PRESETS[state.intensity]);
+    } else {
+        parts.push('movement intensity appropriate for a TikTok hook, energetic and eye-catching');
+    }
+
+    // Chaos
+    if (combo.chaos) {
+        parts.push('Additional chaos effects: ' + combo.chaos);
+    }
+
+    // Hook TikTok
+    if (combo.hook) {
+        parts.push('VIRAL TIKTOK HOOK STRUCTURE: ' + combo.hook.prompt);
+    }
+
+    // Contraintes finales
+    parts.push('Vertical portrait orientation 9:16, 24fps, no text overlays, no subtitles, no watermarks, consistent character design with the source image, attention-grabbing throughout');
+
+    return parts.join('. ');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// API AGNES
+// ══════════════════════════════════════════════════════════════════
+async function apiFetch(url, options = {}, label = 'API') {
+    for (let attempt = 0; attempt < 7; attempt++) {
+        if (state.stopRequested) throw new Error('Arrêt demandé');
+        try {
+            const res = await fetch(url, options);
+            if (res.status === 429) {
+                state.creationAttemptsSinceLastError = 0;
+                if (createIntervalMs < CREATE_INTERVAL_SAFE) {
+                    createIntervalMs = Math.min(createIntervalMs + 8000, CREATE_INTERVAL_MAX);
+                }
+                const wait = [15, 30, 45, 60, 90, 120, 180][Math.min(attempt, 6)];
+                setStatus('L\'IA se prépare… (' + wait + 's)');
+                await sleep(wait * 1000);
+                continue;
+            }
+            if (res.status === 503) {
+                const wait = [5, 10, 15, 20, 30, 45][Math.min(attempt, 5)];
+                setStatus('Votre vidéo se prépare… (' + wait + 's)');
+                await sleep(wait * 1000);
+                continue;
+            }
+            if (res.ok && createIntervalMs > CREATE_INTERVAL_MIN) {
+                state.creationAttemptsSinceLastError++;
+                if (state.creationAttemptsSinceLastError >= 3) {
+                    createIntervalMs = Math.max(createIntervalMs - 4000, CREATE_INTERVAL_MIN);
+                    state.creationAttemptsSinceLastError = 0;
+                }
+            }
+            return res;
+        } catch (e) {
+            if (e.message === 'Arrêt demandé') throw e;
+            const wait = [3, 5, 8, 12, 20, 30][Math.min(attempt, 5)];
+            setStatus('Connexion… (' + wait + 's)');
+            await sleep(wait * 1000);
+        }
+    }
+    return fetch(url, options);
+}
+
+async function createVideoTask(imageDataUri, prompt) {
+    const body = {
+        model: MODEL_VIDEO,
+        prompt: prompt,
+        image: imageDataUri,
+        num_frames: state.durationFrames,
+        frame_rate: FRAME_RATE
+    };
+
+    const res = await apiFetch(API_BASE + '/videos', {
+        method: 'POST',
+        headers: {
+            'Authorization': 'Bearer ' + getApiKey(),
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+    }, 'Création');
+
+    if (!res.ok) {
+        const err = await res.text();
+        throw new Error('HTTP ' + res.status + ' — ' + err.slice(0, 200));
+    }
+
+    const data = await res.json();
+    const videoId = data.video_id || data.id || data.task_id;
+    if (!videoId) throw new Error('Pas de video_id retourné');
+    return videoId;
+}
+
+async function pollVideo(videoId, onProgress) {
+    const estimatedMs = estimateGenerationTime(state.durationFrames);
+    const estimatedSec = estimatedMs / 1000;
+
+    let remaining = Math.max(20, Math.floor(estimatedSec * 0.8));
+    while (remaining > 0) {
+        if (state.stopRequested) throw new Error('Arrêt demandé');
+        onProgress('Préparation… — ' + remaining + 's');
+        await sleep(1000);
+        remaining--;
+    }
+
+    for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
+        if (state.stopRequested) throw new Error('Arrêt demandé');
+        if (attempt > 0) {
+            let r = POLL_INTERVAL_SEC;
+            while (r > 0) {
+                if (state.stopRequested) throw new Error('Arrêt demandé');
+                onProgress('La vidéo prend vie… — ' + r + 's');
+                await sleep(1000);
+                r--;
+            }
+        }
+
+        const url = POLL_BASE + '?video_id=' + encodeURIComponent(videoId) + '&model_name=' + encodeURIComponent(MODEL_VIDEO);
+        const res = await apiFetch(url, {
+            method: 'GET',
+            headers: { 'Authorization': 'Bearer ' + getApiKey() }
+        }, 'Polling');
+
+        const d = await res.json();
+        const status = d.status || 'unknown';
+        const progress = d.progress || 0;
+        onProgress('Création… — ' + progress + '%');
+
+        if (status === 'completed' || status === 'succeeded' || status === 'done') {
+            const videoUrl = (d.metadata && d.metadata.url) || d.url || (d.output && d.output.url);
+            if (!videoUrl) throw new Error('Terminé mais pas d\'URL');
+            return videoUrl;
+        }
+        if (status === 'failed' || status === 'error' || status === 'cancelled') {
+            throw new Error('Échec (' + status + ')');
+        }
+    }
+    throw new Error('Délai maximal dépassé');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// FILE D'ATTENTE
+// ══════════════════════════════════════════════════════════════════
+function renderQueue() {
+    const queueEl = document.getElementById('queue');
+    if (!state.queue.length) { queueEl.style.display = 'none'; return; }
+    queueEl.style.display = 'block';
+
+    const total = state.queue.length;
+    const done = state.completed + state.failed;
+    const inProgress = state.queue.filter(q => q.status === 'processing').length;
+    const pending = total - done - inProgress;
+
+    const estGen = estimateGenerationTime(state.durationFrames) / 1000;
+    const eta = pending > 0
+        ? (pending * (createIntervalMs / 1000)) + estGen
+        : (inProgress * estGen / Math.max(inProgress, 1));
+
+    let html = '<div class="queue-summary">' +
+        '<span class="progress-text">' + done + '/' + total + ' générées</span>' +
+        '<span class="eta-text">' + (done < total ? '≈ ' + formatEta(eta) + ' restant' : '✓ Terminé') + '</span>' +
+        '</div>';
+
+    const visible = state.queue.slice(0, MAX_VISIBLE_QUEUE);
+    const hidden = state.queue.length - visible.length;
+
+    html += visible.map((item, idx) => {
+        let icon = '○', statusText = 'En attente', cls = 'pending';
+        if (item.status === 'creating') { icon = '◐'; statusText = 'Préparation…'; cls = 'creating'; }
+        else if (item.status === 'processing') { icon = '◐'; statusText = item.progress || 'En cours…'; cls = 'processing'; }
+        else if (item.status === 'done') { icon = '●'; statusText = 'Terminé'; cls = 'done'; }
+        else if (item.status === 'failed') { icon = '✕'; statusText = 'Échec'; cls = 'failed'; }
+
+        const combo = item.combo;
+        const title = combo.style.emoji + ' ' + esc(combo.style.name);
+        const subtitle = combo.ambiance.emoji + ' ' + esc(combo.ambiance.name) + ' · ' + esc(combo.camera.name) + (combo.hook ? ' · ' + esc(combo.hook.name) : '');
+
+        let progressBar = '';
+        if (item.status === 'processing' && item.progressPercent > 0) {
+            progressBar = '<div class="q-progress-bar" style="width:' + item.progressPercent + '%"></div>';
+        }
+
+        return '<div class="queue-item ' + cls + '">' +
+            '<div class="q-icon">' + icon + '</div>' +
+            '<div class="q-info">' +
+                '<div class="q-title">' + title + '</div>' +
+                '<div class="q-subtitle">' + subtitle + '</div>' +
+            '</div>' +
+            '<div class="q-status">' + esc(statusText) + '</div>' +
+            progressBar +
+        '</div>';
+    }).join('');
+
+    if (hidden > 0) {
+        html += '<div class="queue-more">… et ' + hidden + ' autre' + (hidden > 1 ? 's' : '') + '</div>';
+    }
+
+    queueEl.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// GALERIE
+// ══════════════════════════════════════════════════════════════════
+const galleryVideos = [];
+
+function addToGallery(videoUrl, item) {
+    const galleryEl = document.getElementById('gallery');
+    const galleryGrid = document.getElementById('gallery-grid');
+    galleryEl.style.display = 'block';
+
+    const combo = item.combo;
+    const galleryItemId = 'gi_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+
+    const el = document.createElement('div');
+    el.className = 'gallery-item';
+    el.id = galleryItemId;
+    el.innerHTML =
+        '<video controls preload="metadata" muted playsinline loop>' +
+            '<source src="' + videoUrl + '" type="video/mp4">' +
+        '</video>' +
+        '<div class="g-info">' +
+            (combo.hook ? '<div class="g-hook">🎯 ' + esc(combo.hook.name) + '</div>' : '') +
+            '<div class="g-combo">' + combo.style.emoji + ' ' + esc(combo.style.name) + '</div>' +
+            '<div class="g-sub">' + combo.ambiance.emoji + ' ' + esc(combo.ambiance.name) + ' · ' + esc(combo.camera.name) + '</div>' +
+        '</div>' +
+        '<div class="g-actions">' +
+            '<a class="g-btn" href="' + videoUrl + '" download="hook_' + item.imageIndex + '.mp4" target="_blank">⬇️ Télécharger</a>' +
+        '</div>';
+
+    galleryGrid.appendChild(el);
+
+    galleryVideos.push({
+        url: videoUrl,
+        index: item.imageIndex,
+        item: item
+    });
+}
+
+document.getElementById('download-all-btn')?.addEventListener('click', () => {
+    if (galleryVideos.length === 0) {
+        showToast('Aucune vidéo à télécharger', 'warn');
+        return;
+    }
+    showToast('Téléchargement de ' + galleryVideos.length + ' vidéos…', 'success');
+    galleryVideos.forEach((v, i) => {
+        setTimeout(() => {
+            const a = document.createElement('a');
+            a.href = v.url;
+            a.download = 'hook_' + (i + 1) + '.mp4';
+            a.target = '_blank';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }, i * 600);
+    });
+});
+
+// ══════════════════════════════════════════════════════════════════
+// PIPELINE
+// ══════════════════════════════════════════════════════════════════
+async function createTaskOnly(item) {
+    item.status = 'creating';
+    item.progress = 'Préparation…';
+    renderQueue();
+
+    const prompt = buildPromptFromCombo(item.combo);
+    item.prompt = prompt;
+
+    log('[Vidéo ' + (item.imageIndex + 1) + '] ' + item.combo.style.name + ' + ' + item.combo.ambiance.name);
+    const videoId = await createVideoTask(state.image.dataUri, prompt);
+    item.videoId = videoId;
+    item.startTime = Date.now();
+    item.status = 'processing';
+    item.progress = 'En cours…';
+    renderQueue();
+
+    return videoId;
+}
+
+async function pollTaskAndDisplay(item) {
+    try {
+        const videoUrl = await pollVideo(item.videoId, (prog) => {
+            item.progress = prog;
+            const m = prog.match(/(\d+)%/);
+            if (m) item.progressPercent = parseInt(m[1], 10);
+            renderQueue();
+        });
+
+        const elapsed = Date.now() - item.startTime;
+        recordGenerationTime(state.durationFrames, elapsed);
+
+        item.status = 'done';
+        item.videoUrl = videoUrl;
+        item.progress = 'Terminé';
+        state.completed++;
+        renderQueue();
+        updateGenerateBtn();
+
+        addToGallery(videoUrl, item);
+    } catch (e) {
+        if (e.message === 'Arrêt demandé') {
+            item.status = 'failed';
+            item.progress = 'Arrêté';
+        } else {
+            log('[Vidéo ' + (item.imageIndex + 1) + '] ' + e.message);
+            item.status = 'failed';
+            item.progress = 'Échec';
+            state.failed++;
+        }
+        renderQueue();
+        updateGenerateBtn();
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// WORKFLOW PRINCIPAL
+// ══════════════════════════════════════════════════════════════════
+async function startGeneration() {
+    if (state.isRunning || !state.image) return;
+    if (!getApiKey()) {
+        showToast('Ajoutez d\'abord votre clé API', 'error');
+        document.getElementById('api-key-input').focus();
+        return;
+    }
+
+    state.isRunning = true;
+    state.stopRequested = false;
+    state.completed = 0;
+    state.failed = 0;
+    state.creationAttemptsSinceLastError = 0;
+
+    createIntervalMs = CREATE_INTERVAL_MIN;
+
+    // Générer toutes les combinaisons uniques
+    setStatus('🎲 Génération des combinaisons uniques…');
+    const combos = generateUniqueCombos(state.videoCount);
+
+    state.queue = combos.map((combo, i) => ({
+        imageIndex: i,
+        combo: combo,
+        status: 'pending',
+        progress: null,
+        progressPercent: 0,
+        videoId: null,
+        videoUrl: null,
+        prompt: null,
+        startTime: null
+    }));
+
+    document.getElementById('gallery-grid').innerHTML = '';
+    document.getElementById('gallery').style.display = 'none';
+    galleryVideos.length = 0;
+
+    document.getElementById('stop-btn').classList.add('visible');
+    document.getElementById('generate-btn').disabled = true;
+
+    await ensureWakeLockActive();
+
+    renderQueue();
+    updateGenerateBtn();
+
+    log('Démarrage — ' + state.videoCount + ' vidéos avec combinaisons uniques');
+
+    const totalStart = Date.now();
+    const pollingTasks = [];
+
+    try {
+        for (let i = 0; i < state.queue.length; i++) {
+            if (state.stopRequested) break;
+
+            const item = state.queue[i];
+
+            try {
+                await createTaskOnly(item);
+                pollingTasks.push(pollTaskAndDisplay(item));
+            } catch (e) {
+                if (e.message === 'Arrêt demandé') break;
+                log('[Vidéo ' + (i + 1) + '] Échec : ' + e.message);
+                item.status = 'failed';
+                item.progress = 'Échec';
+                state.failed++;
+                renderQueue();
+                updateGenerateBtn();
+            }
+
+            if (i < state.queue.length - 1 && !state.stopRequested) {
+                const waitSec = Math.ceil(createIntervalMs / 1000);
+                for (let r = waitSec; r > 0; r--) {
+                    if (state.stopRequested) break;
+                    const nextNum = i + 2;
+                    setStatus('🎰 Prochaine vidéo ' + nextNum + '/' + state.queue.length + ' dans ' + r + 's');
+                    await sleep(1000);
+                }
+            }
+        }
+
+        if (pollingTasks.length > 0) {
+            setStatus('🎬 Finalisation des vidéos…');
+            await Promise.allSettled(pollingTasks);
+        }
+    } catch (e) {
+        log('Erreur globale : ' + e.message);
+    }
+
+    const totalElapsed = (Date.now() - totalStart) / 1000;
+    const summary = state.stopRequested
+        ? 'Arrêté — ' + state.completed + '/' + state.queue.length + ' vidéos'
+        : '✦ ' + state.completed + '/' + state.queue.length + ' vidéos créées en ' + formatEta(totalElapsed) + ' ✦';
+
+    log(summary);
+    setStatus(summary);
+    await sleep(4000);
+    setStatus(null);
+
+    state.isRunning = false;
+    state.stopRequested = false;
+    document.getElementById('stop-btn').classList.remove('visible');
+    updateGenerateBtn();
+
+    showToast(state.completed + ' vidéo' + (state.completed > 1 ? 's' : '') + ' créée' + (state.completed > 1 ? 's' : '') + ' 🎰', 'success');
+}
+
+function stopGeneration() {
+    if (!state.isRunning) return;
+    state.stopRequested = true;
+    log('Arrêt demandé');
+    setStatus('Arrêt en cours…');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// INITIALISATION
+// ══════════════════════════════════════════════════════════════════
+(function init() {
+    // Clé API
+    document.getElementById('api-save-btn')?.addEventListener('click', saveApiKey);
+    document.getElementById('api-key-input')?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); saveApiKey(); }
+    });
+
+    // Stop
+    document.getElementById('stop-btn')?.addEventListener('click', stopGeneration);
+
+    // Sections collapsibles
+    document.querySelectorAll('[data-toggle]').forEach(header => {
+        header.addEventListener('click', () => {
+            document.getElementById(header.dataset.toggle).classList.toggle('open');
+        });
+    });
+
+    // Upload
+    const uploadZone = document.getElementById('upload-zone');
+    const fileInput = document.getElementById('file-input');
+    if (uploadZone && fileInput) {
+        uploadZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', e => {
+            if (e.target.files && e.target.files[0]) {
+                handleSingleFile(e.target.files[0]);
+            }
+            fileInput.value = '';
+        });
+    }
+
+    // Sélecteurs
+    document.getElementById('duration-select')?.addEventListener('change', e => {
+        state.durationFrames = parseInt(e.target.value, 10);
+    });
+    document.getElementById('intensity-select')?.addEventListener('change', e => {
+        state.intensity = e.target.value;
+    });
+    document.getElementById('family-select')?.addEventListener('change', e => {
+        state.family = e.target.value;
+    });
+
+    // Toggles
+    const setupToggle = (id, key, defaultVal) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('click', () => {
+            state[key] = !state[key];
+            el.classList.toggle('on', state[key]);
+        });
+    };
+    setupToggle('toggle-antidup', 'antiDup', true);
+    setupToggle('toggle-chaos', 'chaosMode', false);
+    setupToggle('toggle-hooks', 'hookMode', true);
+
+    // Générer
+    document.getElementById('generate-btn')?.addEventListener('click', startGeneration);
+
+    // Wake lock au démarrage
+    if (wakeLockEnabled) {
+        activateWakeLock();
+    }
+
+    // Init UI
+    updateApiPanel();
+    renderCountSelector();
+    renderSinglePreview();
+    renderQueue();
+
+    log('Hook Machine prête.');
+})();
+</script>
+
+</body>
+</html>
