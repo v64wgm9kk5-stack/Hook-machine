@@ -92,6 +92,7 @@
         font-size: 0.65rem; letter-spacing: 0;
     }
     .section-title .badge.soft { background: var(--neon-cyan); color: #000; }
+    .section-title .badge.opt { background: transparent; color: var(--ink-dim); border: 1px solid var(--border); }
     .section-header .chevron {
         font-size: 0.7rem; color: var(--ink-faint); transition: transform 0.2s;
     }
@@ -183,6 +184,86 @@
         color: #fff; padding: 1.5rem 0.8rem 0.6rem;
         font-size: 0.75rem; font-weight: 600;
     }
+
+    /* NOUVEAU : Champs description & dialogue */
+    .story-field {
+        margin-bottom: 1.1rem;
+    }
+    .story-field:last-child { margin-bottom: 0; }
+    .story-label {
+        display: flex; align-items: center; gap: 0.5rem;
+        font-size: 0.8rem; font-weight: 700;
+        color: var(--ink); margin-bottom: 0.5rem;
+    }
+    .story-label .story-icon {
+        font-size: 1.1rem;
+    }
+    .story-label .story-badge {
+        font-size: 0.6rem; font-weight: 600;
+        padding: 0.15rem 0.5rem; border-radius: 6px;
+        background: var(--panel-2); color: var(--ink-dim);
+        border: 1px solid var(--border);
+        margin-left: auto;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .story-label .story-badge.required {
+        background: rgba(255,46,147,0.15); color: var(--neon-pink);
+        border-color: rgba(255,46,147,0.4);
+    }
+    .story-textarea {
+        width: 100%; padding: 0.8rem 0.9rem;
+        border-radius: 10px; border: 1px solid var(--border);
+        background: var(--panel-2); color: var(--ink);
+        font-family: inherit; font-size: 0.88rem;
+        line-height: 1.5;
+        resize: vertical;
+        min-height: 80px;
+    }
+    .story-textarea:focus {
+        outline: none;
+        border-color: var(--neon-pink);
+        box-shadow: 0 0 0 3px rgba(255,46,147,0.1);
+    }
+    .story-textarea::placeholder {
+        color: var(--ink-faint);
+        font-style: italic;
+    }
+    .story-hint {
+        font-size: 0.7rem; color: var(--ink-dim);
+        margin-top: 0.4rem; line-height: 1.4;
+        font-style: italic;
+    }
+    .story-presets {
+        display: flex; flex-wrap: wrap; gap: 0.35rem;
+        margin-top: 0.6rem;
+    }
+    .story-preset {
+        padding: 0.3rem 0.65rem; border-radius: 14px;
+        border: 1px solid var(--border); background: var(--panel-2);
+        font-size: 0.68rem; cursor: pointer;
+        transition: all 0.15s; user-select: none;
+        color: var(--ink-dim);
+    }
+    .story-preset:hover {
+        border-color: var(--neon-cyan); color: var(--neon-cyan);
+    }
+    .story-preset:active { transform: scale(0.95); }
+    .story-preset.dialogue:hover {
+        border-color: var(--neon-lime); color: var(--neon-lime);
+    }
+
+    .dialogue-warning {
+        background: rgba(255,176,32,0.08);
+        border: 1px solid rgba(255,176,32,0.3);
+        border-radius: 8px;
+        padding: 0.6rem 0.8rem;
+        font-size: 0.7rem;
+        color: #ffd980;
+        margin-top: 0.5rem;
+        line-height: 1.4;
+    }
+    .dialogue-warning strong { color: #ffb020; }
 
     .count-selector {
         display: grid;
@@ -397,6 +478,12 @@
         margin-top: 0.15rem;
         overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
+    .gallery-item .g-dialogue {
+        font-size: 0.65rem; color: var(--neon-lime);
+        margin-top: 0.3rem;
+        font-style: italic;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
     .gallery-item .g-actions {
         display: flex; gap: 0.3rem; padding: 0 0.7rem 0.6rem;
         background: var(--panel);
@@ -435,17 +522,6 @@
 
     #noSleepCanvas { position: fixed; top: 0; left: 0; width: 1px; height: 1px; opacity: 0.01; pointer-events: none; z-index: -1; }
     #noSleepVideo { position: fixed; top: 0; left: 0; width: 1px; height: 1px; opacity: 0.01; pointer-events: none; z-index: -1; }
-
-    .vibe-tag {
-        display: inline-block;
-        font-size: 0.6rem;
-        padding: 0.15rem 0.45rem;
-        border-radius: 6px;
-        background: var(--panel-2);
-        border: 1px solid var(--border);
-        color: var(--ink-dim);
-        margin-right: 0.25rem;
-    }
 </style>
 </head>
 <body>
@@ -456,10 +532,9 @@
 </header>
 
 <div class="info-banner">
-    <strong>Comment ça marche :</strong> Charge <strong>UNE seule photo</strong>, choisis combien de vidéos tu veux (20 recommandé).
-    L'appli va générer des variations <strong>totalement différentes</strong> en piochant aléatoirement parmi
-    <strong>40+ styles visuels</strong>, <strong>15 ambiances</strong>, <strong>25 mouvements</strong> et <strong>12 types de hook TikTok</strong>.
-    Idéal pour tester ce qui accroche ton audience.
+    <strong>Comment ça marche :</strong> Charge <strong>UNE seule photo</strong>, décris la scène et le dialogue (optionnel),
+    choisis combien de vidéos tu veux. L'appli génère des variations <strong>totalement différentes</strong> en piochant
+    parmi <strong>40+ styles</strong>, <strong>15 ambiances</strong>, <strong>25 mouvements</strong> et <strong>12 hooks TikTok</strong>.
 </div>
 
 <div class="api-panel" id="api-panel">
@@ -483,6 +558,62 @@
 </div>
 
 <div id="single-preview-container"></div>
+
+<!-- NOUVEAU : Description de scène & Dialogue -->
+<div class="section open" id="section-story">
+    <div class="section-header" data-toggle="section-story">
+        <span class="section-title">🎭 Scène & Dialogue <span class="badge opt">optionnel</span></span>
+        <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+        <div class="section-content">
+
+            <!-- Description de scène -->
+            <div class="story-field">
+                <div class="story-label">
+                    <span class="story-icon">📝</span>
+                    <span>Description de la scène</span>
+                    <span class="story-badge">optionnel</span>
+                </div>
+                <textarea class="story-textarea" id="scene-description"
+                    placeholder="Décris ce qui doit se passer dans la vidéo. Ex :
+
+« Le personnage se retourne lentement vers la caméra dans une ruelle pluvieuse. Une voiture passe au loin. Il essuie une larme du revers de la main. »"></textarea>
+                <div class="story-hint">
+                    💡 Cette description sera combinée avec le style et le mouvement aléatoires. Sois précis sur les actions, l'ambiance, et les éléments de la scène.
+                </div>
+                <div class="story-presets" id="scene-presets"></div>
+            </div>
+
+            <!-- Dialogue du personnage -->
+            <div class="story-field">
+                <div class="story-label">
+                    <span class="story-icon">💬</span>
+                    <span>Dialogue du personnage</span>
+                    <span class="story-badge">optionnel</span>
+                </div>
+                <textarea class="story-textarea" id="character-dialogue"
+                    placeholder="Le texte que le personnage doit dire. Ex :
+
+« Tu ne me reverras plus jamais. »
+
+Ou plusieurs répliques :
+
+« Je t'attendais.
+Tu es en retard.
+Comme toujours. »"></textarea>
+                <div class="story-hint">
+                    💡 L'IA utilisera cette phrase pour adapter l'<strong>expression, la posture et la gestuelle</strong> du personnage (ex : phrase triste → regard baissé, phrase agressive → sourcils froncés).
+                </div>
+                <div class="dialogue-warning">
+                    ⚠️ <strong>Note :</strong> Le modèle actuel ne fait pas de <strong>lip-sync</strong> (synchronisation labiale avec du son). Le dialogue sert à orienter l'émotion et l'attitude du personnage. Pour un vrai lip-sync avec voix, il faut un outil spécialisé (HeyGen, D-ID…).
+                </div>
+                <div class="story-presets" id="dialogue-presets"></div>
+            </div>
+
+        </div>
+    </div>
+</div>
 
 <div class="section open" id="section-count">
     <div class="section-header" data-toggle="section-count">
@@ -608,13 +739,249 @@ const CREATE_INTERVAL_SAFE = 75000;
 const POLL_INTERVAL_SEC = 8;
 const MAX_POLL_ATTEMPTS = 100;
 
-const TIMING_CACHE_KEY = 'hook_machine_timing_v1';
+const TIMING_CACHE_KEY = 'hook_machine_timing_v2';
 const API_KEY_STORAGE = 'agnes_api_key';
 const WAKE_LOCK_PREF = 'agnes_wakelock_enabled';
 
 const MAX_VISIBLE_QUEUE = 40;
 const MAX_IMAGE_SIZE = 15 * 1024 * 1024;
 const THUMBNAIL_MAX_WIDTH = 300;
+
+// ══════════════════════════════════════════════════════════════════
+// PRESETS DE SCÈNE
+// ══════════════════════════════════════════════════════════════════
+const SCENE_PRESETS = [
+    { label: '🚶 Marche vers la caméra',
+      text: 'Le personnage marche lentement vers la caméra, un pas après l\'autre, dans une ambiance silencieuse. Son regard est fixé droit devant lui.' },
+    { label: '👀 Se retourne lentement',
+      text: 'Le personnage se retourne lentement vers la caméra, révélant son visage progressivement. Le vent fait voler ses cheveux.' },
+    { label: '💧 Larme qui coule',
+      text: 'Une larme coule lentement sur la joue du personnage. Son regard est baissé, ses lèvres tremblent légèrement. Ambiance mélancolique.' },
+    { label: '😱 Regard choqué',
+      text: 'Le personnage ouvre grand les yeux, sous le choc. Sa bouche s\'entrouvre légèrement, il recule d\'un pas. Quelque chose d\'inattendu vient de se passer.' },
+    { label: '😊 Sourire naissant',
+      text: 'Un sourire se dessine progressivement sur le visage du personnage. Ses yeux se plissent doucement, il a l\'air apaisé.' },
+    { label: '🔥 Regard intense',
+      text: 'Le personnage fixe la caméra avec une intensité rare. Aucune expression sur son visage, juste une présence puissante et silencieuse.' },
+    { label: '✨ Yeux qui s\'illuminent',
+      text: 'Les yeux du personnage s\'illuminent soudainement, comme si une révélation venait de se produire. Lumière dorée qui traverse le cadre.' },
+    { label: '🌪️ Vent puissant',
+      text: 'Un vent puissant traverse la scène. Les cheveux et les vêtements du personnage volent, l\'atmosphère est dramatique.' }
+];
+
+const DIALOGUE_PRESETS = [
+    { label: '💔 Rupture',
+      text: 'Tu ne me reverras plus jamais.' },
+    { label: '🔥 Détermination',
+      text: 'Je vais y arriver. Quoi qu\'il arrive.' },
+    { label: '😢 Tristesse',
+      text: 'Je t\'attends depuis si longtemps.' },
+    { label: '⚡ Menace',
+      text: 'Tu n\'aurais pas dû venir ici.' },
+    { label: '😏 Confiance',
+      text: 'Regarde-moi dans les yeux.' },
+    { label: '🌙 Mélancolie',
+      text: 'Les souvenirs finissent toujours par s\'effacer.' },
+    { label: '💪 Motivation',
+      text: 'Ce n\'est que le début.' },
+    { label: '😱 Choc',
+      text: 'Ce n\'est pas possible…' }
+];
+
+// ══════════════════════════════════════════════════════════════════
+// STYLES VISUELS
+// ══════════════════════════════════════════════════════════════════
+const STYLE_FAMILIES = {
+    cyber: {
+        label: 'Cyber / Néon / Futuriste',
+        styles: [
+            { id: 'cyberpunk', name: 'Cyberpunk Néon', emoji: '🌃', prompt: 'cyberpunk aesthetic with intense neon pink and cyan lighting, holographic reflections, Blade Runner style, rain-slicked surfaces, futuristic dystopia' },
+            { id: 'synthwave', name: 'Synthwave 80s', emoji: '🕹️', prompt: 'synthwave 1980s retro-futuristic aesthetic, neon grid, chrome reflections, purple and pink gradient sky, VHS-era futurism' },
+            { id: 'matrix', name: 'Matrix Digital', emoji: '🟢', prompt: 'The Matrix digital rain aesthetic, cascading green code, glitch effects, dark green tint, techno-dystopia' },
+            { id: 'hologram', name: 'Hologramme Futur', emoji: '💠', prompt: 'holographic projection aesthetic, iridescent light, translucent shimmer, futuristic display, glowing wireframes' },
+            { id: 'space', name: 'Cosmique Spatial', emoji: '🌌', prompt: 'cosmic space setting, deep nebulas, distant galaxies, starlight, weightless drift, astrophysical wonder' },
+            { id: 'atomic', name: 'Atome Rétro-Futur', emoji: '⚛️', prompt: 'atomic age retro-futurism, 1950s sci-fi, atompunk, chrome and teal colors, flying saucers, optimistic futurism' }
+        ]
+    },
+    retro: {
+        label: 'Rétro / Vintage / Analogique',
+        styles: [
+            { id: 'vhs', name: 'VHS 80s', emoji: '📼', prompt: 'authentic VHS tape aesthetic, scan lines, tape distortion, chromatic aberration, faded 80s colors, tracking errors, analog warmth' },
+            { id: 'polaroid', name: 'Polaroïd Fané', emoji: '📷', prompt: 'faded vintage Polaroid photo aesthetic, soft warm tones, slight vignette, dust and scratches, nostalgic film grain' },
+            { id: 'sepia', name: 'Sépia Antique', emoji: '🟤', prompt: 'old sepia photograph, antique look, subtle scratches, aged paper texture, historical mood, warm brown tones' },
+            { id: 'super8', name: 'Super 8', emoji: '🎞️', prompt: 'Super 8mm film aesthetic, heavy grain, flicker, warm faded colors, subtle scratches, home movie feel' },
+            { id: 'western', name: 'Western', emoji: '🤠', prompt: 'spaghetti western aesthetic, warm dusty palette, harsh sunlight, dust particles floating, cinematic wide desert vibe' },
+            { id: 'noir', name: 'Film Noir', emoji: '🕵️', prompt: '1940s film noir aesthetic, high contrast black and white, deep shadows, cigarette smoke, dramatic chiaroscuro, detective mood' },
+            { id: 'kodachrome', name: 'Kodachrome', emoji: '🌈', prompt: 'vintage Kodachrome film look, rich saturated colors, slightly warm, 1960s-1970s photographic feel, golden atmosphere' }
+        ]
+    },
+    anime: {
+        label: 'Anime / Cartoon / Dessin',
+        styles: [
+            { id: 'ghibli', name: 'Studio Ghibli', emoji: '🌿', prompt: 'Studio Ghibli anime aesthetic, hand-painted watercolor backgrounds, Hayao Miyazaki style, soft natural lighting, warm earthy palette, gentle atmosphere' },
+            { id: 'shinkai', name: 'Makoto Shinkai', emoji: '☁️', prompt: 'Makoto Shinkai anime aesthetic, vivid skies with dramatic clouds, saturated colors, lens flares, god rays, hyper-detailed backgrounds, emotional atmosphere' },
+            { id: 'shonen', name: 'Shōnen Action', emoji: '⚔️', prompt: 'shōnen anime action style, dynamic motion lines, bold outlines, vibrant energy, dramatic impact frames, chakra-like glow effects' },
+            { id: 'shoujo', name: 'Shōjo Sparkle', emoji: '💖', prompt: 'shōjo anime aesthetic, sparkling effects, pastel colors, flowers floating, romantic atmosphere, delicate line work, dreamy soft focus' },
+            { id: 'comic', name: 'Comic US', emoji: '💥', prompt: 'American comic book aesthetic, bold ink outlines, halftone dots, vibrant saturated colors, dynamic composition, superhero energy' },
+            { id: 'pixar', name: '3D Pixar', emoji: '✨', prompt: 'high-quality Pixar-style 3D animation, subsurface scattering, cinematic lighting, expressive character design, warm rendering' },
+            { id: 'claymation', name: 'Claymation', emoji: '🧱', prompt: 'stop-motion claymation aesthetic, plasticine texture, fingerprint details, handmade feel, Aardman Studios vibe' },
+            { id: 'pixel', name: 'Pixel Art', emoji: '🎮', prompt: 'retro pixel art aesthetic, 16-bit SNES style, limited color palette, chunky pixels, nostalgic video game feel' }
+        ]
+    },
+    cinema: {
+        label: 'Cinéma / Hollywood / Épique',
+        styles: [
+            { id: 'epic', name: 'Blockbuster Épique', emoji: '🎬', prompt: 'epic Hollywood blockbuster aesthetic, dramatic lighting, cinematic depth of field, heroic composition, sweeping camera, cinematic color grading' },
+            { id: 'scifi', name: 'Sci-Fi Premium', emoji: '🚀', prompt: 'high-end science fiction cinema aesthetic, sleek futuristic design, cool blue palette, lens flares, Christopher Nolan vibes' },
+            { id: 'thriller', name: 'Thriller Suspense', emoji: '🔪', prompt: 'dark thriller aesthetic, cold desaturated palette, tense atmosphere, sharp shadows, suspenseful mood, David Fincher style' },
+            { id: 'western-cinema', name: 'Western Cinéma', emoji: '🌵', prompt: 'cinematic western aesthetic, wide open landscapes, warm dusty tones, harsh sun, epic scale, Sergio Leone composition' },
+            { id: 'fantasy', name: 'Fantasy Épique', emoji: '🗡️', prompt: 'epic fantasy aesthetic, magical atmosphere, dragons flying in the distance, glowing particles, Lord of the Rings vibe, sweeping vista' },
+            { id: 'war', name: 'Film de Guerre', emoji: '💣', prompt: 'war film aesthetic, desaturated palette, smoke and embers, dramatic contrast, heroic atmosphere, Saving Private Ryan style' }
+        ]
+    },
+    horror: {
+        label: 'Horreur / Mystère / Sombre',
+        styles: [
+            { id: 'horror', name: 'Horreur Classique', emoji: '👻', prompt: 'classic horror aesthetic, deep shadows, eerie fog, cold desaturated palette, unsettling mood, thing in the dark' },
+            { id: 'lovecraft', name: 'Lovecraftien', emoji: '🐙', prompt: 'Lovecraftian cosmic horror, tentacles of shadow, impossible geometry, deep sea gloom, green sickly light, dread inducing' },
+            { id: 'zombie', name: 'Zombie Apocalypse', emoji: '🧟', prompt: 'zombie apocalypse aesthetic, decayed atmosphere, smoke and ash, survival horror, bleak desaturated palette, danger imminent' },
+            { id: 'gothic', name: 'Gothique Sombre', emoji: '🦇', prompt: 'gothic dark aesthetic, crimson and black palette, candlelight, cathedral shadows, vampiric atmosphere, dramatic mood' },
+            { id: 'mystery', name: 'Mystère Brumeux', emoji: '🌫️', prompt: 'mysterious foggy atmosphere, muted teal and grey palette, hidden threats, unsettling calm, Twin Peaks vibe' },
+            { id: 'nightmare', name: 'Cauchemar Surréaliste', emoji: '🌀', prompt: 'nightmarish surreal aesthetic, distorted reality, melting forms, disturbing dream logic, Dali meets horror' }
+        ]
+    },
+    art: {
+        label: 'Art / Peinture / Surréaliste',
+        styles: [
+            { id: 'oil', name: 'Peinture à l\'Huile', emoji: '🖼️', prompt: 'classical oil painting aesthetic, visible impasto brushstrokes, rich textured paint, Rembrandt lighting, old master technique' },
+            { id: 'watercolor', name: 'Aquarelle', emoji: '🎨', prompt: 'dreamy watercolor painting aesthetic, soft bleeding edges, translucent washes, paper texture, delicate color blending' },
+            { id: 'baroque', name: 'Baroque', emoji: '👑', prompt: 'Baroque painting aesthetic, dramatic chiaroscuro lighting, rich gold and deep red palette, ornate composition, Caravaggio style' },
+            { id: 'surreal', name: 'Surréaliste', emoji: '🌀', prompt: 'surrealist aesthetic, impossible juxtapositions, dreamlike distortions, melting clocks, Magritte and Dali influence' },
+            { id: 'renaissance', name: 'Renaissance', emoji: '🏛️', prompt: 'Renaissance painting aesthetic, sfumato technique, warm earthly palette, classical composition, Leonardo and Raphael style' },
+            { id: 'pop-art', name: 'Pop Art', emoji: '💥', prompt: 'pop art aesthetic, bold flat colors, halftone Ben-Day dots, Andy Warhol and Roy Lichtenstein style, comic panels' },
+            { id: 'graffiti', name: 'Street Art', emoji: '🎨', prompt: 'street art graffiti aesthetic, spray paint texture, bold tags, urban walls, Banksy-inspired, chaotic energy' }
+        ]
+    },
+    nature: {
+        label: 'Nature / Organique / Élément',
+        styles: [
+            { id: 'fire', name: 'Feu & Braises', emoji: '🔥', prompt: 'surrounded by dancing flames, glowing embers floating in the air, warm orange light, heat haze distortion, elemental fire magic' },
+            { id: 'water', name: 'Eau & Vagues', emoji: '🌊', prompt: 'surrounded by flowing water, glowing blue ripples, underwater light rays, aquatic atmosphere, elemental water magic' },
+            { id: 'storm', name: 'Orage & Éclairs', emoji: '⛈️', prompt: 'dramatic thunderstorm, lightning bolts in the sky, dark rolling clouds, rain and wind, elemental storm magic' },
+            { id: 'ice', name: 'Glace & Neige', emoji: '❄️', prompt: 'surrounded by ice and snow, crystalline frost patterns, cold blue light, falling snowflakes, elemental ice magic' },
+            { id: 'forest', name: 'Forêt Enchantée', emoji: '🌲', prompt: 'enchanted forest, glowing mushrooms, fireflies floating, ancient trees, magical woodland atmosphere, bioluminescence' },
+            { id: 'sakura', name: 'Cerisiers en Fleurs', emoji: '🌸', prompt: 'surrounded by falling cherry blossom petals, soft pink light, spring breeze, delicate romantic atmosphere, Japanese garden' },
+            { id: 'jungle', name: 'Jungle Tropicale', emoji: '🌴', prompt: 'lush tropical jungle, vibrant green foliage, humid air, dappled sunlight, exotic birds and sounds' },
+            { id: 'desert', name: 'Désert Aride', emoji: '🏜️', prompt: 'vast desert, sand dunes rippling, harsh golden sun, heat shimmer, dust devils, epic emptiness' },
+            { id: 'underwater', name: 'Sous-Marin', emoji: '🐠', prompt: 'underwater scene, floating in ocean depths, light rays from above, bubbles rising, fish swimming around, deep blue tranquility' }
+        ]
+    }
+};
+
+const AMBIANCES = [
+    { id: 'golden', name: 'Golden Hour', emoji: '🌅', prompt: 'golden hour warm backlight, long amber shadows, sun kiss glow' },
+    { id: 'blue-hour', name: 'Bleu Crépuscule', emoji: '🌆', prompt: 'blue hour atmosphere, deep blue and pink gradient sky, calm dusk' },
+    { id: 'moonlight', name: 'Clair de Lune', emoji: '🌙', prompt: 'cool moonlight, blue and silver tones, soft lunar glow' },
+    { id: 'dramatic', name: 'Dramatique', emoji: '⛅', prompt: 'dramatic high-contrast lighting, deep shadows, theatrical mood' },
+    { id: 'dreamy', name: 'Onirique', emoji: '💭', prompt: 'dreamy hazy atmosphere, soft focus, pastel colors, ethereal glow' },
+    { id: 'misty', name: 'Brumeux', emoji: '🌫️', prompt: 'atmospheric mist, soft haze, diffused light, mysterious fog' },
+    { id: 'neon-night', name: 'Nuit Néon', emoji: '🌃', prompt: 'neon night atmosphere, vibrant colored light reflections, electric mood' },
+    { id: 'rainy', name: 'Pluvieux', emoji: '🌧️', prompt: 'rainy atmosphere, wet reflective surfaces, soft droplet trails, melancholic' },
+    { id: 'stormy', name: 'Orageux', emoji: '⛈️', prompt: 'stormy atmosphere, rolling dark clouds, dramatic sky, tension' },
+    { id: 'snowy', name: 'Neigeux', emoji: '❄️', prompt: 'snowy atmosphere, falling snowflakes, cold bluish light, quiet winter' },
+    { id: 'spring', name: 'Printanier', emoji: '🌸', prompt: 'spring atmosphere, fresh colors, flower petals floating, warm gentle light' },
+    { id: 'summer', name: 'Estival', emoji: '☀️', prompt: 'bright summer atmosphere, strong sunlight, heat shimmer, saturated colors' },
+    { id: 'autumn', name: 'Automnal', emoji: '🍂', prompt: 'autumn atmosphere, falling leaves, warm orange and red palette, nostalgic' },
+    { id: 'winter', name: 'Hivernal', emoji: '🌨️', prompt: 'winter atmosphere, frozen landscape, cold blue palette, sharp crisp air' },
+    { id: 'sunset-explosive', name: 'Coucher Épique', emoji: '🌇', prompt: 'epic sunset with explosive orange, pink and purple sky, dramatic clouds' }
+];
+
+const CAMERA_MOVES = [
+    { id: 'dolly-in', name: 'Zoom Avant Lent', prompt: 'slow smooth dolly-in, camera gliding toward the subject' },
+    { id: 'dolly-out', name: 'Zoom Arrière', prompt: 'slow dolly-out, camera pulling back to reveal the scene' },
+    { id: 'zoom-punch', name: 'Zoom Punch Brutal', prompt: 'aggressive fast zoom punch-in, sudden jarring impact movement' },
+    { id: 'pan-left', name: 'Panoramique Gauche', prompt: 'smooth horizontal pan from right to left, revealing' },
+    { id: 'pan-right', name: 'Panoramique Droite', prompt: 'smooth horizontal pan from left to right, revealing' },
+    { id: 'tilt-up', name: 'Tilt Vertical Haut', prompt: 'camera tilts upward, revealing the sky above' },
+    { id: 'tilt-down', name: 'Tilt Vertical Bas', prompt: 'camera tilts downward, revealing the ground below' },
+    { id: 'orbit', name: 'Orbite 360', prompt: 'camera orbiting around the subject, revealing all angles' },
+    { id: 'handheld', name: 'Caméra Portée', prompt: 'handheld shaky camera, breathing movement, documentary feel' },
+    { id: 'whip-pan', name: 'Whip Pan', prompt: 'fast whip pan, quick motion blur transition' },
+    { id: 'dutch', name: 'Angle Hollandais', prompt: 'dutch angle tilt, disorienting asymmetric framing' },
+    { id: 'crane-up', name: 'Grue Ascendante', prompt: 'crane shot rising upward, sweeping high angle reveal' },
+    { id: 'crane-down', name: 'Grue Descendante', prompt: 'crane shot descending, settling gently on the subject' },
+    { id: 'push-in-slow', name: 'Poussée Intime', prompt: 'slow intimate push-in toward the subject\'s face' },
+    { id: 'parallax', name: 'Parallaxe Profonde', prompt: 'subtle parallax shift, background and foreground separating, 2.5D depth' },
+    { id: 'rack-focus', name: 'Rack Focus', prompt: 'rack focus from foreground to background or vice versa, cinematic blur shift' },
+    { id: 'freeze', name: 'Freeze Frame', prompt: 'the motion slows to an almost-freeze, micro-movement only, breathing stillness' },
+    { id: 'speed-ramp', name: 'Speed Ramp', prompt: 'speed ramp effect, slowing then accelerating the motion dramatically' },
+    { id: 'shake', name: 'Secousse Violente', prompt: 'violent camera shake, earthquake-like trembling, disorienting' },
+    { id: 'vertigo', name: 'Vertigo Hitchcock', prompt: 'vertigo dolly-zoom effect, background stretches unnaturally while subject stays fixed' },
+    { id: 'spin', name: 'Rotation Complète', prompt: 'full 360-degree camera spin around the subject' },
+    { id: 'drop', name: 'Chute Verticale', prompt: 'camera rapidly drops vertically, feeling of falling' },
+    { id: 'rise', name: 'Ascension Verticale', prompt: 'camera rapidly rises, feeling of elevation and reveal' },
+    { id: 'glitch-cut', name: 'Glitch Cut', prompt: 'rapid glitchy cuts, digital distortion transition frames' },
+    { id: 'whip-zoom', name: 'Whip Zoom Frénétique', prompt: 'frantic whip zoom in and out, chaotic energy' }
+];
+
+const TIKTOK_HOOKS = [
+    { id: 'wait-end', name: 'Attends la fin', prompt: 'the first 2 seconds are calm and subtle, then at the 3-second mark something surprising happens — a sudden reveal, transformation, or shocking moment. Classic "wait for it" TikTok structure.' },
+    { id: 'hard-transition', name: 'Transition Brutale', prompt: 'sudden hard cut or whiplash transition mid-way through, jarring the viewer with a completely different visual state in the second half' },
+    { id: 'reveal-zoom', name: 'Zoom Reveal', prompt: 'the scene starts wide or obscured, then rapidly zooms in to reveal the subject in dramatic fashion, building tension' },
+    { id: 'flash-bang', name: 'Flash Bang', prompt: 'a bright flash or explosion of light suddenly transforms the scene, creating a shocking visual impact' },
+    { id: 'glitch-shock', name: 'Glitch Choquant', prompt: 'reality glitches and distorts violently, rippling through the frame before resolving into a new surprising state' },
+    { id: 'freeze-snap', name: 'Snap Freeze', prompt: 'motion suddenly stops mid-action with a jarring freeze frame, then resumes with a new dramatic beat' },
+    { id: 'split-reveal', name: 'Split Reveal', prompt: 'the frame splits into multiple pieces that slowly rotate and reveal the full scene, like broken glass reforming' },
+    { id: 'explosion-entry', name: 'Entrée Explosive', prompt: 'an explosive burst of particles, light, or smoke erupts from the center of the frame, clearing to reveal the subject' },
+    { id: 'portal', name: 'Portail Dimensionnel', prompt: 'a glowing portal opens in the middle of the scene, distorting reality around it, before the subject steps forward dramatically' },
+    { id: 'time-rewind', name: 'Time Rewind', prompt: 'time suddenly rewinds — motion reverses, colors invert briefly, then plays forward again in a new state' },
+    { id: 'double-exposure', name: 'Double Exposition', prompt: 'two different versions of the scene overlap and morph into each other, creating a hypnotic transformation effect' },
+    { id: 'shadow-surprise', name: 'Ombre Surprise', prompt: 'a dark ominous shadow moves across the frame, plunging the scene into darkness before revealing a surprising new state' }
+];
+
+const CHAOS_EFFECTS = [
+    'heavy digital glitch distortion, RGB channel separation, scan line tearing',
+    'kaleidoscope mirroring effect, repeating fractal patterns',
+    'datamoshing artifacts, pixel sorting, compression corruption',
+    'liquid melt distortion, forms dripping and warping',
+    'chromatic aberration burst, color fringing on all edges',
+    'strobe light flashing, rapid light and dark pulses',
+    'reality fracture, screen splitting into shards',
+    'fractal zoom recursive pattern, infinite tunnel depth',
+    'particle explosion, thousands of glowing particles',
+    'negative inversion flash, colors flipping momentarily',
+    'VHS tracking error sweep, analog corruption wave',
+    'duplicate ghosting trails, motion echo afterimages'
+];
+
+const INTENSITY_PRESETS = {
+    subtle: 'very subtle minimal movement, barely perceptible change, calm contemplative mood',
+    moderate: 'moderate clear movement, natural cinematic pace',
+    strong: 'extreme dynamic movement, chaotic energetic motion, powerful physical action, dramatic impact'
+};
+
+// ══════════════════════════════════════════════════════════════════
+// ÉTAT GLOBAL
+// ══════════════════════════════════════════════════════════════════
+const state = {
+    image: null,
+    isRunning: false,
+    stopRequested: false,
+    queue: [],
+    completed: 0,
+    failed: 0,
+    videoCount: 20,
+    durationFrames: 153,
+    intensity: 'random',
+    family: 'all',
+    antiDup: true,
+    chaosMode: false,
+    hookMode: true,
+    sceneDescription: '',
+    characterDialogue: '',
+    isLoadingImage: false,
+    creationAttemptsSinceLastError: 0
+};
 
 // ══════════════════════════════════════════════════════════════════
 // TOAST
@@ -656,9 +1023,7 @@ async function requestWakeLockAPI() {
     if (!isWakeLockSupported()) return false;
     try {
         wakeLockSentinel = await navigator.wakeLock.request('screen');
-        wakeLockSentinel.addEventListener('release', () => {
-            wakeLockSentinel = null;
-        });
+        wakeLockSentinel.addEventListener('release', () => { wakeLockSentinel = null; });
         return true;
     } catch (e) { return false; }
 }
@@ -750,214 +1115,6 @@ function estimateGenerationTime(numFrames) {
     }
     return 30000 + numFrames * 500;
 }
-
-// ══════════════════════════════════════════════════════════════════
-// 🎨 STYLES VISUELS — 40+ STYLES RÉPARTIS EN FAMILLES
-// ══════════════════════════════════════════════════════════════════
-const STYLE_FAMILIES = {
-    cyber: {
-        label: 'Cyber / Néon / Futuriste',
-        styles: [
-            { id: 'cyberpunk', name: 'Cyberpunk Néon', emoji: '🌃', prompt: 'cyberpunk aesthetic with intense neon pink and cyan lighting, holographic reflections, Blade Runner style, rain-slicked surfaces, futuristic dystopia' },
-            { id: 'synthwave', name: 'Synthwave 80s', emoji: '🕹️', prompt: 'synthwave 1980s retro-futuristic aesthetic, neon grid, chrome reflections, purple and pink gradient sky, VHS-era futurism' },
-            { id: 'matrix', name: 'Matrix Digital', emoji: '🟢', prompt: 'The Matrix digital rain aesthetic, cascading green code, glitch effects, dark green tint, techno-dystopia' },
-            { id: 'hologram', name: 'Hologramme Futur', emoji: '💠', prompt: 'holographic projection aesthetic, iridescent light, translucent shimmer, futuristic display, glowing wireframes' },
-            { id: 'space', name: 'Cosmique Spatial', emoji: '🌌', prompt: 'cosmic space setting, deep nebulas, distant galaxies, starlight, weightless drift, astrophysical wonder' },
-            { id: 'atomic', name: 'Atome Rétro-Futur', emoji: '⚛️', prompt: 'atomic age retro-futurism, 1950s sci-fi, atompunk, chrome and teal colors, flying saucers, optimistic futurism' }
-        ]
-    },
-    retro: {
-        label: 'Rétro / Vintage / Analogique',
-        styles: [
-            { id: 'vhs', name: 'VHS 80s', emoji: '📼', prompt: 'authentic VHS tape aesthetic, scan lines, tape distortion, chromatic aberration, faded 80s colors, tracking errors, analog warmth' },
-            { id: 'polaroid', name: 'Polaroïd Fané', emoji: '📷', prompt: 'faded vintage Polaroid photo aesthetic, soft warm tones, slight vignette, dust and scratches, nostalgic film grain' },
-            { id: 'sepia', name: 'Sépia Antique', emoji: '🟤', prompt: 'old sepia photograph, antique look, subtle scratches, aged paper texture, historical mood, warm brown tones' },
-            { id: 'super8', name: 'Super 8', emoji: '🎞️', prompt: 'Super 8mm film aesthetic, heavy grain, flicker, warm faded colors, subtle scratches, home movie feel' },
-            { id: 'western', name: 'Western', emoji: '🤠', prompt: 'spaghetti western aesthetic, warm dusty palette, harsh sunlight, dust particles floating, cinematic wide desert vibe' },
-            { id: 'noir', name: 'Film Noir', emoji: '🕵️', prompt: '1940s film noir aesthetic, high contrast black and white, deep shadows, cigarette smoke, dramatic chiaroscuro, detective mood' },
-            { id: 'kodachrome', name: 'Kodachrome', emoji: '🌈', prompt: 'vintage Kodachrome film look, rich saturated colors, slightly warm, 1960s-1970s photographic feel, golden atmosphere' }
-        ]
-    },
-    anime: {
-        label: 'Anime / Cartoon / Dessin',
-        styles: [
-            { id: 'ghibli', name: 'Studio Ghibli', emoji: '🌿', prompt: 'Studio Ghibli anime aesthetic, hand-painted watercolor backgrounds, Hayao Miyazaki style, soft natural lighting, warm earthy palette, gentle atmosphere' },
-            { id: 'shinkai', name: 'Makoto Shinkai', emoji: '☁️', prompt: 'Makoto Shinkai anime aesthetic, vivid skies with dramatic clouds, saturated colors, lens flares, god rays, hyper-detailed backgrounds, emotional atmosphere' },
-            { id: 'shonen', name: 'Shōnen Action', emoji: '⚔️', prompt: 'shōnen anime action style, dynamic motion lines, bold outlines, vibrant energy, dramatic impact frames, chakra-like glow effects' },
-            { id: 'shoujo', name: 'Shōjo Sparkle', emoji: '💖', prompt: 'shōjo anime aesthetic, sparkling effects, pastel colors, flowers floating, romantic atmosphere, delicate line work, dreamy soft focus' },
-            { id: 'comic', name: 'Comic US', emoji: '💥', prompt: 'American comic book aesthetic, bold ink outlines, halftone dots, vibrant saturated colors, dynamic composition, superhero energy' },
-            { id: 'pixar', name: '3D Pixar', emoji: '✨', prompt: 'high-quality Pixar-style 3D animation, subsurface scattering, cinematic lighting, expressive character design, warm rendering' },
-            { id: 'claymation', name: 'Claymation', emoji: '🧱', prompt: 'stop-motion claymation aesthetic, plasticine texture, fingerprint details, handmade feel, Aardman Studios vibe' },
-            { id: 'pixel', name: 'Pixel Art', emoji: '🎮', prompt: 'retro pixel art aesthetic, 16-bit SNES style, limited color palette, chunky pixels, nostalgic video game feel' }
-        ]
-    },
-    cinema: {
-        label: 'Cinéma / Hollywood / Épique',
-        styles: [
-            { id: 'epic', name: 'Blockbuster Épique', emoji: '🎬', prompt: 'epic Hollywood blockbuster aesthetic, dramatic lighting, cinematic depth of field, heroic composition, sweeping camera, cinematic color grading' },
-            { id: 'scifi', name: 'Sci-Fi Premium', emoji: '🚀', prompt: 'high-end science fiction cinema aesthetic, sleek futuristic design, cool blue palette, lens flares, Christopher Nolan vibes' },
-            { id: 'thriller', name: 'Thriller Suspense', emoji: '🔪', prompt: 'dark thriller aesthetic, cold desaturated palette, tense atmosphere, sharp shadows, suspenseful mood, David Fincher style' },
-            { id: 'western-cinema', name: 'Western Cinéma', emoji: '🌵', prompt: 'cinematic western aesthetic, wide open landscapes, warm dusty tones, harsh sun, epic scale, Sergio Leone composition' },
-            { id: 'fantasy', name: 'Fantasy Épique', emoji: '🗡️', prompt: 'epic fantasy aesthetic, magical atmosphere, dragons flying in the distance, glowing particles, Lord of the Rings vibe, sweeping vista' },
-            { id: 'war', name: 'Film de Guerre', emoji: '💣', prompt: 'war film aesthetic, desaturated palette, smoke and embers, dramatic contrast, heroic atmosphere, Saving Private Ryan style' }
-        ]
-    },
-    horror: {
-        label: 'Horreur / Mystère / Sombre',
-        styles: [
-            { id: 'horror', name: 'Horreur Classique', emoji: '👻', prompt: 'classic horror aesthetic, deep shadows, eerie fog, cold desaturated palette, unsettling mood, thing in the dark' },
-            { id: 'lovecraft', name: 'Lovecraftien', emoji: '🐙', prompt: 'Lovecraftian cosmic horror, tentacles of shadow, impossible geometry, deep sea gloom, green sickly light, dread inducing' },
-            { id: 'zombie', name: 'Zombie Apocalypse', emoji: '🧟', prompt: 'zombie apocalypse aesthetic, decayed atmosphere, smoke and ash, survival horror, bleak desaturated palette, danger imminent' },
-            { id: 'gothic', name: 'Gothique Sombre', emoji: '🦇', prompt: 'gothic dark aesthetic, crimson and black palette, candlelight, cathedral shadows, vampiric atmosphere, dramatic mood' },
-            { id: 'mystery', name: 'Mystère Brumeux', emoji: '🌫️', prompt: 'mysterious foggy atmosphere, muted teal and grey palette, hidden threats, unsettling calm, Twin Peaks vibe' },
-            { id: 'nightmare', name: 'Cauchemar Surréaliste', emoji: '🌀', prompt: 'nightmarish surreal aesthetic, distorted reality, melting forms, disturbing dream logic, Dali meets horror' }
-        ]
-    },
-    art: {
-        label: 'Art / Peinture / Surréaliste',
-        styles: [
-            { id: 'oil', name: 'Peinture à l\'Huile', emoji: '🖼️', prompt: 'classical oil painting aesthetic, visible impasto brushstrokes, rich textured paint, Rembrandt lighting, old master technique' },
-            { id: 'watercolor', name: 'Aquarelle', emoji: '🎨', prompt: 'dreamy watercolor painting aesthetic, soft bleeding edges, translucent washes, paper texture, delicate color blending' },
-            { id: 'baroque', name: 'Baroque', emoji: '👑', prompt: 'Baroque painting aesthetic, dramatic chiaroscuro lighting, rich gold and deep red palette, ornate composition, Caravaggio style' },
-            { id: 'surreal', name: 'Surréaliste', emoji: '🌀', prompt: 'surrealist aesthetic, impossible juxtapositions, dreamlike distortions, melting clocks, Magritte and Dali influence' },
-            { id: 'renaissance', name: 'Renaissance', emoji: '🏛️', prompt: 'Renaissance painting aesthetic, sfumato technique, warm earthly palette, classical composition, Leonardo and Raphael style' },
-            { id: 'pop-art', name: 'Pop Art', emoji: '💥', prompt: 'pop art aesthetic, bold flat colors, halftone Ben-Day dots, Andy Warhol and Roy Lichtenstein style, comic panels' },
-            { id: 'graffiti', name: 'Street Art', emoji: '🎨', prompt: 'street art graffiti aesthetic, spray paint texture, bold tags, urban walls, Banksy-inspired, chaotic energy' }
-        ]
-    },
-    nature: {
-        label: 'Nature / Organique / Élément',
-        styles: [
-            { id: 'fire', name: 'Feu & Braises', emoji: '🔥', prompt: 'surrounded by dancing flames, glowing embers floating in the air, warm orange light, heat haze distortion, elemental fire magic' },
-            { id: 'water', name: 'Eau & Vagues', emoji: '🌊', prompt: 'surrounded by flowing water, glowing blue ripples, underwater light rays, aquatic atmosphere, elemental water magic' },
-            { id: 'storm', name: 'Orage & Éclairs', emoji: '⛈️', prompt: 'dramatic thunderstorm, lightning bolts in the sky, dark rolling clouds, rain and wind, elemental storm magic' },
-            { id: 'ice', name: 'Glace & Neige', emoji: '❄️', prompt: 'surrounded by ice and snow, crystalline frost patterns, cold blue light, falling snowflakes, elemental ice magic' },
-            { id: 'forest', name: 'Forêt Enchantée', emoji: '🌲', prompt: 'enchanted forest, glowing mushrooms, fireflies floating, ancient trees, magical woodland atmosphere, bioluminescence' },
-            { id: 'sakura', name: 'Cerisiers en Fleurs', emoji: '🌸', prompt: 'surrounded by falling cherry blossom petals, soft pink light, spring breeze, delicate romantic atmosphere, Japanese garden' },
-            { id: 'jungle', name: 'Jungle Tropicale', emoji: '🌴', prompt: 'lush tropical jungle, vibrant green foliage, humid air, dappled sunlight, exotic birds and sounds' },
-            { id: 'desert', name: 'Désert Aride', emoji: '🏜️', prompt: 'vast desert, sand dunes rippling, harsh golden sun, heat shimmer, dust devils, epic emptiness' },
-            { id: 'underwater', name: 'Sous-Marin', emoji: '🐠', prompt: 'underwater scene, floating in ocean depths, light rays from above, bubbles rising, fish swimming around, deep blue tranquility' }
-        ]
-    }
-};
-
-// ══════════════════════════════════════════════════════════════════
-// 🌈 AMBIANCES — COUCHES SUPPLÉMENTAIRES
-// ══════════════════════════════════════════════════════════════════
-const AMBIANCES = [
-    { id: 'golden', name: 'Golden Hour', emoji: '🌅', prompt: 'golden hour warm backlight, long amber shadows, sun kiss glow' },
-    { id: 'blue-hour', name: 'Bleu Crépuscule', emoji: '🌆', prompt: 'blue hour atmosphere, deep blue and pink gradient sky, calm dusk' },
-    { id: 'moonlight', name: 'Clair de Lune', emoji: '🌙', prompt: 'cool moonlight, blue and silver tones, soft lunar glow' },
-    { id: 'dramatic', name: 'Dramatique', emoji: '⛅', prompt: 'dramatic high-contrast lighting, deep shadows, theatrical mood' },
-    { id: 'dreamy', name: 'Onirique', emoji: '💭', prompt: 'dreamy hazy atmosphere, soft focus, pastel colors, ethereal glow' },
-    { id: 'misty', name: 'Brumeux', emoji: '🌫️', prompt: 'atmospheric mist, soft haze, diffused light, mysterious fog' },
-    { id: 'neon-night', name: 'Nuit Néon', emoji: '🌃', prompt: 'neon night atmosphere, vibrant colored light reflections, electric mood' },
-    { id: 'rainy', name: 'Pluvieux', emoji: '🌧️', prompt: 'rainy atmosphere, wet reflective surfaces, soft droplet trails, melancholic' },
-    { id: 'stormy', name: 'Orageux', emoji: '⛈️', prompt: 'stormy atmosphere, rolling dark clouds, dramatic sky, tension' },
-    { id: 'snowy', name: 'Neigeux', emoji: '❄️', prompt: 'snowy atmosphere, falling snowflakes, cold bluish light, quiet winter' },
-    { id: 'spring', name: 'Printanier', emoji: '🌸', prompt: 'spring atmosphere, fresh colors, flower petals floating, warm gentle light' },
-    { id: 'summer', name: 'Estival', emoji: '☀️', prompt: 'bright summer atmosphere, strong sunlight, heat shimmer, saturated colors' },
-    { id: 'autumn', name: 'Automnal', emoji: '🍂', prompt: 'autumn atmosphere, falling leaves, warm orange and red palette, nostalgic' },
-    { id: 'winter', name: 'Hivernal', emoji: '🌨️', prompt: 'winter atmosphere, frozen landscape, cold blue palette, sharp crisp air' },
-    { id: 'sunset-explosive', name: 'Coucher Épique', emoji: '🌇', prompt: 'epic sunset with explosive orange, pink and purple sky, dramatic clouds' }
-];
-
-// ══════════════════════════════════════════════════════════════════
-// 🎥 MOUVEMENTS DE CAMÉRA — 25 VARIATIONS
-// ══════════════════════════════════════════════════════════════════
-const CAMERA_MOVES = [
-    { id: 'dolly-in', name: 'Zoom Avant Lent', prompt: 'slow smooth dolly-in, camera gliding toward the subject' },
-    { id: 'dolly-out', name: 'Zoom Arrière', prompt: 'slow dolly-out, camera pulling back to reveal the scene' },
-    { id: 'zoom-punch', name: 'Zoom Punch Brutal', prompt: 'aggressive fast zoom punch-in, sudden jarring impact movement' },
-    { id: 'pan-left', name: 'Panoramique Gauche', prompt: 'smooth horizontal pan from right to left, revealing' },
-    { id: 'pan-right', name: 'Panoramique Droite', prompt: 'smooth horizontal pan from left to right, revealing' },
-    { id: 'tilt-up', name: 'Tilt Vertical Haut', prompt: 'camera tilts upward, revealing the sky above' },
-    { id: 'tilt-down', name: 'Tilt Vertical Bas', prompt: 'camera tilts downward, revealing the ground below' },
-    { id: 'orbit', name: 'Orbite 360', prompt: 'camera orbiting around the subject, revealing all angles' },
-    { id: 'handheld', name: 'Caméra Portée', prompt: 'handheld shaky camera, breathing movement, documentary feel' },
-    { id: 'whip-pan', name: 'Whip Pan', prompt: 'fast whip pan, quick motion blur transition' },
-    { id: 'dutch', name: 'Angle Hollandais', prompt: 'dutch angle tilt, disorienting asymmetric framing' },
-    { id: 'crane-up', name: 'Grue Ascendante', prompt: 'crane shot rising upward, sweeping high angle reveal' },
-    { id: 'crane-down', name: 'Grue Descendante', prompt: 'crane shot descending, settling gently on the subject' },
-    { id: 'push-in-slow', name: 'Poussée Intime', prompt: 'slow intimate push-in toward the subject\'s face' },
-    { id: 'parallax', name: 'Parallaxe Profonde', prompt: 'subtle parallax shift, background and foreground separating, 2.5D depth' },
-    { id: 'rack-focus', name: 'Rack Focus', prompt: 'rack focus from foreground to background or vice versa, cinematic blur shift' },
-    { id: 'freeze', name: 'Freeze Frame', prompt: 'the motion slows to an almost-freeze, micro-movement only, breathing stillness' },
-    { id: 'speed-ramp', name: 'Speed Ramp', prompt: 'speed ramp effect, slowing then accelerating the motion dramatically' },
-    { id: 'shake', name: 'Secousse Violente', prompt: 'violent camera shake, earthquake-like trembling, disorienting' },
-    { id: 'vertigo', name: 'Vertigo Hitchcock', prompt: 'vertigo dolly-zoom effect, background stretches unnaturally while subject stays fixed' },
-    { id: 'spin', name: 'Rotation Complète', prompt: 'full 360-degree camera spin around the subject' },
-    { id: 'drop', name: 'Chute Verticale', prompt: 'camera rapidly drops vertically, feeling of falling' },
-    { id: 'rise', name: 'Ascension Verticale', prompt: 'camera rapidly rises, feeling of elevation and reveal' },
-    { id: 'glitch-cut', name: 'Glitch Cut', prompt: 'rapid glitchy cuts, digital distortion transition frames' },
-    { id: 'whip-zoom', name: 'Whip Zoom Frénétique', prompt: 'frantic whip zoom in and out, chaotic energy' }
-];
-
-// ══════════════════════════════════════════════════════════════════
-// 🎬 HOOKS TIKTOK — 12 PATTERNS D'ACCROCHE
-// ══════════════════════════════════════════════════════════════════
-const TIKTOK_HOOKS = [
-    { id: 'wait-end', name: 'Attends la fin', prompt: 'the first 2 seconds are calm and subtle, then at the 3-second mark something surprising happens — a sudden reveal, transformation, or shocking moment. Classic "wait for it" TikTok structure.' },
-    { id: 'hard-transition', name: 'Transition Brutale', prompt: 'sudden hard cut or whiplash transition mid-way through, jarring the viewer with a completely different visual state in the second half' },
-    { id: 'reveal-zoom', name: 'Zoom Reveal', prompt: 'the scene starts wide or obscured, then rapidly zooms in to reveal the subject in dramatic fashion, building tension' },
-    { id: 'flash-bang', name: 'Flash Bang', prompt: 'a bright flash or explosion of light suddenly transforms the scene, creating a shocking visual impact' },
-    { id: 'glitch-shock', name: 'Glitch Choquant', prompt: 'reality glitches and distorts violently, rippling through the frame before resolving into a new surprising state' },
-    { id: 'freeze-snap', name: 'Snap Freeze', prompt: 'motion suddenly stops mid-action with a jarring freeze frame, then resumes with a new dramatic beat' },
-    { id: 'split-reveal', name: 'Split Reveal', prompt: 'the frame splits into multiple pieces that slowly rotate and reveal the full scene, like broken glass reforming' },
-    { id: 'explosion-entry', name: 'Entrée Explosive', prompt: 'an explosive burst of particles, light, or smoke erupts from the center of the frame, clearing to reveal the subject' },
-    { id: 'portal', name: 'Portail Dimensionnel', prompt: 'a glowing portal opens in the middle of the scene, distorting reality around it, before the subject steps forward dramatically' },
-    { id: 'time-rewind', name: 'Time Rewind', prompt: 'time suddenly rewinds — motion reverses, colors invert briefly, then plays forward again in a new state' },
-    { id: 'double-exposure', name: 'Double Exposition', prompt: 'two different versions of the scene overlap and morph into each other, creating a hypnotic transformation effect' },
-    { id: 'shadow-surprise', name: 'Ombre Surprise', prompt: 'a dark ominous shadow moves across the frame, plunging the scene into darkness before revealing a surprising new state' }
-];
-
-// ══════════════════════════════════════════════════════════════════
-// 💥 CHAOS EFFECTS — AJOUTÉS AU MODE CHAOS
-// ══════════════════════════════════════════════════════════════════
-const CHAOS_EFFECTS = [
-    'heavy digital glitch distortion, RGB channel separation, scan line tearing',
-    'kaleidoscope mirroring effect, repeating fractal patterns',
-    'datamoshing artifacts, pixel sorting, compression corruption',
-    'liquid melt distortion, forms dripping and warping',
-    'chromatic aberration burst, color fringing on all edges',
-    'strobe light flashing, rapid light and dark pulses',
-    'reality fracture, screen splitting into shards',
-    'fractal zoom recursive pattern, infinite tunnel depth',
-    'particle explosion, thousands of glowing particles',
-    'negative inversion flash, colors flipping momentarily',
-    'VHS tracking error sweep, analog corruption wave',
-    'duplicate ghosting trails, motion echo afterimages'
-];
-
-// ══════════════════════════════════════════════════════════════════
-// INTENSITÉS
-// ══════════════════════════════════════════════════════════════════
-const INTENSITY_PRESETS = {
-    subtle: 'very subtle minimal movement, barely perceptible change, calm contemplative mood',
-    moderate: 'moderate clear movement, natural cinematic pace',
-    strong: 'extreme dynamic movement, chaotic energetic motion, powerful physical action, dramatic impact'
-};
-
-// ══════════════════════════════════════════════════════════════════
-// ÉTAT GLOBAL
-// ══════════════════════════════════════════════════════════════════
-const state = {
-    image: null,           // UNE SEULE PHOTO
-    isRunning: false,
-    stopRequested: false,
-    queue: [],
-    completed: 0,
-    failed: 0,
-    videoCount: 20,
-    durationFrames: 153,
-    intensity: 'random',
-    family: 'all',
-    antiDup: true,
-    chaosMode: false,
-    hookMode: true,
-    isLoadingImage: false,
-    creationAttemptsSinceLastError: 0
-};
 
 // ══════════════════════════════════════════════════════════════════
 // CLÉ API
@@ -1149,7 +1306,50 @@ function renderSinglePreview() {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// RENDU — SÉLECTEUR DE NOMBRE DE VIDÉOS
+// RENDU — PRESETS SCÈNE & DIALOGUE
+// ══════════════════════════════════════════════════════════════════
+function renderScenePresets() {
+    const container = document.getElementById('scene-presets');
+    container.innerHTML = SCENE_PRESETS.map((p, i) =>
+        '<div class="story-preset" data-scene-preset="' + i + '">' + esc(p.label) + '</div>'
+    ).join('');
+
+    container.querySelectorAll('[data-scene-preset]').forEach(el => {
+        el.addEventListener('click', () => {
+            const idx = parseInt(el.dataset.scenePreset, 10);
+            const preset = SCENE_PRESETS[idx];
+            if (!preset) return;
+            const ta = document.getElementById('scene-description');
+            ta.value = preset.text;
+            state.sceneDescription = preset.text;
+            ta.focus();
+            showToast('Scène appliquée', 'success', 1200);
+        });
+    });
+}
+
+function renderDialoguePresets() {
+    const container = document.getElementById('dialogue-presets');
+    container.innerHTML = DIALOGUE_PRESETS.map((p, i) =>
+        '<div class="story-preset dialogue" data-dialogue-preset="' + i + '">' + esc(p.label) + '</div>'
+    ).join('');
+
+    container.querySelectorAll('[data-dialogue-preset]').forEach(el => {
+        el.addEventListener('click', () => {
+            const idx = parseInt(el.dataset.dialoguePreset, 10);
+            const preset = DIALOGUE_PRESETS[idx];
+            if (!preset) return;
+            const ta = document.getElementById('character-dialogue');
+            ta.value = preset.text;
+            state.characterDialogue = preset.text;
+            ta.focus();
+            showToast('Dialogue appliqué', 'success', 1200);
+        });
+    });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SÉLECTEUR NOMBRE DE VIDÉOS
 // ══════════════════════════════════════════════════════════════════
 const COUNT_OPTIONS = [
     { value: 5, label: 'Rapide' },
@@ -1178,7 +1378,7 @@ function renderCountSelector() {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// COMBINAISON ALÉATOIRE UNIQUE
+// COMBINAISONS UNIQUES
 // ══════════════════════════════════════════════════════════════════
 function getAllStylesFromFamily(family) {
     if (family === 'all') {
@@ -1187,12 +1387,9 @@ function getAllStylesFromFamily(family) {
     return STYLE_FAMILIES[family] ? STYLE_FAMILIES[family].styles : [];
 }
 
-// Génère toutes les combinaisons possibles de manière unique
 function generateUniqueCombos(count) {
     const styles = getAllStylesFromFamily(state.family);
     const combos = [];
-
-    // Génère un pool de combinaisons uniques
     const seen = new Set();
     const maxAttempts = count * 50;
     let attempts = 0;
@@ -1205,21 +1402,15 @@ function generateUniqueCombos(count) {
         const hook = state.hookMode ? pickRandom(TIKTOK_HOOKS) : null;
 
         const key = style.id + '|' + ambiance.id + '|' + camera.id + (hook ? '|' + hook.id : '');
-
         if (state.antiDup && seen.has(key)) continue;
         seen.add(key);
 
-        const combo = {
-            style: style,
-            ambiance: ambiance,
-            camera: camera,
-            hook: hook,
+        combos.push({
+            style, ambiance, camera, hook,
             chaos: state.chaosMode ? pickRandom(CHAOS_EFFECTS) : null
-        };
-        combos.push(combo);
+        });
     }
 
-    // Si anti-dup impossible (trop de vidéos demandées), on relâche la contrainte
     while (combos.length < count) {
         const style = pickRandom(styles);
         const ambiance = pickRandom(AMBIANCES);
@@ -1235,12 +1426,12 @@ function generateUniqueCombos(count) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// CONSTRUCTION DU PROMPT À PARTIR D'UNE COMBINAISON
+// CONSTRUCTION DU PROMPT AVEC SCÈNE + DIALOGUE
 // ══════════════════════════════════════════════════════════════════
 function buildPromptFromCombo(combo) {
     const parts = [];
 
-    // Base : prolongation de l'image
+    // 1. Base technique
     parts.push(
         'Animate this exact image as the starting frame. ' +
         'This is a CONTINUATION of the source image, not a re-imagination. ' +
@@ -1248,33 +1439,49 @@ function buildPromptFromCombo(combo) {
         'Apply the following visual transformation to the entire scene:'
     );
 
-    // Style
+    // 2. Style
     parts.push(combo.style.prompt);
 
-    // Ambiance
+    // 3. Ambiance
     parts.push('Ambiance: ' + combo.ambiance.prompt);
 
-    // Mouvement de caméra
+    // 4. Description de scène (NOUVEAU — priorité haute)
+    if (state.sceneDescription && state.sceneDescription.trim().length > 0) {
+        parts.push('SCENE DIRECTION (highest priority — follow this action precisely): ' + state.sceneDescription.trim());
+    }
+
+    // 5. Dialogue du personnage (NOUVEAU)
+    if (state.characterDialogue && state.characterDialogue.trim().length > 0) {
+        const dialogue = state.characterDialogue.trim();
+        parts.push(
+            'The subject is silently delivering this line with intense emotion: "' + dialogue + '". ' +
+            'Their facial expression, eye movement, mouth shape, posture, and gestures must reflect the emotion of this line. ' +
+            'Make their expression match the meaning — sad, angry, tender, shocked, determined — whichever fits the words. ' +
+            'No visible text, no subtitles, no speech bubbles — the emotion is conveyed purely through the subject\'s physical performance and expression.'
+        );
+    }
+
+    // 6. Mouvement de caméra
     parts.push('Camera: ' + combo.camera.prompt);
 
-    // Intensité
+    // 7. Intensité
     if (state.intensity !== 'random' && INTENSITY_PRESETS[state.intensity]) {
         parts.push(INTENSITY_PRESETS[state.intensity]);
     } else {
         parts.push('movement intensity appropriate for a TikTok hook, energetic and eye-catching');
     }
 
-    // Chaos
+    // 8. Chaos
     if (combo.chaos) {
         parts.push('Additional chaos effects: ' + combo.chaos);
     }
 
-    // Hook TikTok
+    // 9. Hook TikTok
     if (combo.hook) {
         parts.push('VIRAL TIKTOK HOOK STRUCTURE: ' + combo.hook.prompt);
     }
 
-    // Contraintes finales
+    // 10. Contraintes finales
     parts.push('Vertical portrait orientation 9:16, 24fps, no text overlays, no subtitles, no watermarks, consistent character design with the source image, attention-grabbing throughout');
 
     return parts.join('. ');
@@ -1424,7 +1631,7 @@ function renderQueue() {
     const visible = state.queue.slice(0, MAX_VISIBLE_QUEUE);
     const hidden = state.queue.length - visible.length;
 
-    html += visible.map((item, idx) => {
+    html += visible.map((item) => {
         let icon = '○', statusText = 'En attente', cls = 'pending';
         if (item.status === 'creating') { icon = '◐'; statusText = 'Préparation…'; cls = 'creating'; }
         else if (item.status === 'processing') { icon = '◐'; statusText = item.progress || 'En cours…'; cls = 'processing'; }
@@ -1469,11 +1676,13 @@ function addToGallery(videoUrl, item) {
     galleryEl.style.display = 'block';
 
     const combo = item.combo;
-    const galleryItemId = 'gi_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-
     const el = document.createElement('div');
     el.className = 'gallery-item';
-    el.id = galleryItemId;
+
+    const dialogueSnippet = state.characterDialogue && state.characterDialogue.trim().length > 0
+        ? '💬 "' + esc(state.characterDialogue.trim().slice(0, 40)) + (state.characterDialogue.trim().length > 40 ? '…' : '') + '"'
+        : '';
+
     el.innerHTML =
         '<video controls preload="metadata" muted playsinline loop>' +
             '<source src="' + videoUrl + '" type="video/mp4">' +
@@ -1482,6 +1691,7 @@ function addToGallery(videoUrl, item) {
             (combo.hook ? '<div class="g-hook">🎯 ' + esc(combo.hook.name) + '</div>' : '') +
             '<div class="g-combo">' + combo.style.emoji + ' ' + esc(combo.style.name) + '</div>' +
             '<div class="g-sub">' + combo.ambiance.emoji + ' ' + esc(combo.ambiance.name) + ' · ' + esc(combo.camera.name) + '</div>' +
+            (dialogueSnippet ? '<div class="g-dialogue">' + dialogueSnippet + '</div>' : '') +
         '</div>' +
         '<div class="g-actions">' +
             '<a class="g-btn" href="' + videoUrl + '" download="hook_' + item.imageIndex + '.mp4" target="_blank">⬇️ Télécharger</a>' +
@@ -1583,6 +1793,10 @@ async function startGeneration() {
         return;
     }
 
+    // Récupérer scène + dialogue
+    state.sceneDescription = (document.getElementById('scene-description')?.value || '').trim();
+    state.characterDialogue = (document.getElementById('character-dialogue')?.value || '').trim();
+
     state.isRunning = true;
     state.stopRequested = false;
     state.completed = 0;
@@ -1591,7 +1805,6 @@ async function startGeneration() {
 
     createIntervalMs = CREATE_INTERVAL_MIN;
 
-    // Générer toutes les combinaisons uniques
     setStatus('🎲 Génération des combinaisons uniques…');
     const combos = generateUniqueCombos(state.videoCount);
 
@@ -1619,7 +1832,9 @@ async function startGeneration() {
     renderQueue();
     updateGenerateBtn();
 
-    log('Démarrage — ' + state.videoCount + ' vidéos avec combinaisons uniques');
+    log('Démarrage — ' + state.videoCount + ' vidéos');
+    if (state.sceneDescription) log('Scène : "' + state.sceneDescription.slice(0, 80) + '…"');
+    if (state.characterDialogue) log('Dialogue : "' + state.characterDialogue.slice(0, 80) + '…"');
 
     const totalStart = Date.now();
     const pollingTasks = [];
@@ -1691,23 +1906,19 @@ function stopGeneration() {
 // INITIALISATION
 // ══════════════════════════════════════════════════════════════════
 (function init() {
-    // Clé API
     document.getElementById('api-save-btn')?.addEventListener('click', saveApiKey);
     document.getElementById('api-key-input')?.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') { e.preventDefault(); saveApiKey(); }
     });
 
-    // Stop
     document.getElementById('stop-btn')?.addEventListener('click', stopGeneration);
 
-    // Sections collapsibles
     document.querySelectorAll('[data-toggle]').forEach(header => {
         header.addEventListener('click', () => {
             document.getElementById(header.dataset.toggle).classList.toggle('open');
         });
     });
 
-    // Upload
     const uploadZone = document.getElementById('upload-zone');
     const fileInput = document.getElementById('file-input');
     if (uploadZone && fileInput) {
@@ -1720,7 +1931,14 @@ function stopGeneration() {
         });
     }
 
-    // Sélecteurs
+    // Champs scène & dialogue
+    document.getElementById('scene-description')?.addEventListener('input', e => {
+        state.sceneDescription = e.target.value;
+    });
+    document.getElementById('character-dialogue')?.addEventListener('input', e => {
+        state.characterDialogue = e.target.value;
+    });
+
     document.getElementById('duration-select')?.addEventListener('change', e => {
         state.durationFrames = parseInt(e.target.value, 10);
     });
@@ -1731,8 +1949,7 @@ function stopGeneration() {
         state.family = e.target.value;
     });
 
-    // Toggles
-    const setupToggle = (id, key, defaultVal) => {
+    const setupToggle = (id, key) => {
         const el = document.getElementById(id);
         if (!el) return;
         el.addEventListener('click', () => {
@@ -1740,25 +1957,22 @@ function stopGeneration() {
             el.classList.toggle('on', state[key]);
         });
     };
-    setupToggle('toggle-antidup', 'antiDup', true);
-    setupToggle('toggle-chaos', 'chaosMode', false);
-    setupToggle('toggle-hooks', 'hookMode', true);
+    setupToggle('toggle-antidup', 'antiDup');
+    setupToggle('toggle-chaos', 'chaosMode');
+    setupToggle('toggle-hooks', 'hookMode');
 
-    // Générer
     document.getElementById('generate-btn')?.addEventListener('click', startGeneration);
 
-    // Wake lock au démarrage
-    if (wakeLockEnabled) {
-        activateWakeLock();
-    }
+    if (wakeLockEnabled) activateWakeLock();
 
-    // Init UI
     updateApiPanel();
     renderCountSelector();
     renderSinglePreview();
     renderQueue();
+    renderScenePresets();
+    renderDialoguePresets();
 
-    log('Hook Machine prête.');
+    log('Hook Machine v2 prête.');
 })();
 </script>
 
